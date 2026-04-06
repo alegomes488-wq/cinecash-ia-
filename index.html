@@ -79,7 +79,6 @@
     .tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
     .tab-panel{display:none;width:100%;min-height:100%}.tab-panel.active{display:block;width:100%;min-height:calc(100vh - 100px);overflow:visible}
     .panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
-    .panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
     .panel-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:18px}
     .search-input-wrap{position:relative;margin-bottom:20px}
     .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:14px}
@@ -958,6 +957,15 @@ function fmt(v){return 'R$ '+Number(v||0).toFixed(2)}
 function fmtU(v){return '$'+Number(v||0).toFixed(2)}
 function setLoading(id,on,label){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.textContent=on?'⏳ Aguarde...':label}
 function showToast(msg,type='info'){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 function showSpace(type){
   const user = document.getElementById('app-user-space');
   const admin = document.getElementById('app-admin-space');
@@ -1010,7 +1018,10 @@ async function doRegister(){
   if(!firstName||!lastName||!display||!email||!pass||!confirm)return showToast('Preencha todos os campos!','error')
   if(display.includes(' '))return showToast('O apelido não pode ter espaços!','error')
   if(pass.length<8)return showToast('A senha deve ter no mínimo 8 caracteres!','error')
-  if(pass[0]!==pass[0].toUpperCase())return showToast('A senha deve começar com letra maiúscula!','error')
+  if(!/^(?=.*[A-Z])/.test(pass))return showToast('A senha deve ter pelo menos uma letra maiúscula!','error')
+  if(!/^(?=.*[a-z])/.test(pass))return showToast('A senha deve ter pelo menos uma letra minúscula!','error')
+  if(!/^(?=.*\d)/.test(pass))return showToast('A senha deve ter pelo menos um número!','error')
+  if(!/^(?=.*[@$!%*?&])/.test(pass))return showToast('A senha deve ter pelo menos um caractere especial (@$!%*?&)!','error')
   if(pass!==confirm)return showToast('As senhas não coincidem!','error')
   
   setLoading('reg-btn',true,'Criar Conta')
@@ -1243,17 +1254,17 @@ function renderUsersTable(){
   if(!tbody)return
   if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>';document.getElementById('users-footer').textContent='Nenhum usuário encontrado';return}
   tbody.innerHTML=users.map(u=>`<tr>
-    <td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td>
+    <td style="font-size:11px;color:#6b7280;font-family:monospace">${escapeHtml(u.uid.substring(0,16))}...</td>
     <td>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:8px;height:8px;border-radius:50%;background:${u.isOnline?'#34d399':'#4b5563'};box-shadow:${u.isOnline?'0 0 8px #34d399':''}"></div>
         <div class="user-names">
-          <div class="name">${u.fullname||'-'}</div>
+          <div class="name">${escapeHtml(u.fullname||'-')}</div>
           <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'Offline')}</div>
         </div>
       </div>
     </td>
-    <td>${u.email||'-'}</td>
+    <td>${escapeHtml(u.email||'-')}</td>
     <td style="color:#a78bfa">${u.videosWatched||0}</td>
     <td style="color:#34d399">R$ ${Number(u.balance||0).toFixed(2)}</td>
     <td>${fmtDate(u.createdAt)}</td>
@@ -1300,7 +1311,7 @@ async function addVideo(){
 function renderVideosTable(){
   const videos=_cachedVideos;const tbody=document.getElementById('videos-tbody');if(!tbody)return
   if(!videos.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:24px">Nenhum vídeo cadastrado</td></tr>';document.getElementById('videos-footer').textContent='Nenhum vídeo cadastrado';return}
-  tbody.innerHTML=videos.map(v=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${v.id.substring(0,12)}...</td><td style="color:#fff;font-weight:500">${v.title}</td><td><a href="${v.url}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${v.url.substring(0,38)}${v.url.length>38?'...':''}</a></td><td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td><td>${fmtDate(v.createdAt)}</td><td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td></tr>`).join('')
+  tbody.innerHTML=videos.map(v=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${escapeHtml(v.id.substring(0,12))}...</td><td style="color:#fff;font-weight:500">${escapeHtml(v.title)}</td><td><a href="${escapeHtml(v.url)}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${escapeHtml(v.url.substring(0,38))}${v.url.length>38?'...':''}</a></td><td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td><td>${fmtDate(v.createdAt)}</td><td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td></tr>`).join('')
   document.getElementById('videos-footer').textContent=videos.length+' vídeo'+(videos.length!==1?'s':'')+' cadastrado'+(videos.length!==1?'s':'')
 }
 
@@ -2117,9 +2128,7 @@ async function fetchYouTubeVideos(){
       })
     }
 
-    localStorage.setItem('_yt_last_fetch', String(now))
-    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
-  } catch(e){
+
     console.warn('YouTube fetch error:', e)
   }
 }
@@ -2512,7 +2521,7 @@ async function runAICheck(){
 
   const total = users.length
   const clean = users.filter(u=>!suspicious.includes(u.uid)).length
-  report.innerHTML = `
+  alerts.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:16px">
       <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
         <div style="font-size:20px;font-weight:700;color:#34d399">${total}</div>
@@ -2606,9 +2615,21 @@ async function adminCreateUser(){
     document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter no mínimo 8 caracteres!</span>'
     return showToast('Senha mínima de 8 caracteres!','error')
   }
-  if(pass[0] !== pass[0].toUpperCase()){
-    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve começar com letra maiúscula!</span>'
-    return showToast('Senha deve começar com maiúscula!','error')
+  if(!/^(?=.*[A-Z])/.test(pass)){
+    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos uma maiúscula!</span>'
+    return showToast('Senha deve ter maiúscula!','error')
+  }
+  if(!/^(?=.*[a-z])/.test(pass)){
+    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos uma minúscula!</span>'
+    return showToast('Senha deve ter minúscula!','error')
+  }
+  if(!/^(?=.*\d)/.test(pass)){
+    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos um número!</span>'
+    return showToast('Senha deve ter número!','error')
+  }
+  if(!/^(?=.*[@$!%*?&])/.test(pass)){
+    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter (@$!%*?&)!</span>'
+    return showToast('Senha deve ter caractere especial!','error')
   }
   if(pass !== confirm){
     document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">As senhas não coincidem!</span>'
