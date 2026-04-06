@@ -934,6 +934,7 @@ import {
   getDatabase, ref, set, get, update, remove, onValue, push, off,
   onDisconnect, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
@@ -950,8 +951,8 @@ const app  = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db   = getDatabase(app);
+const functions = getFunctions(app);
 
-const ADMIN_CREDS = null; // credentials stored securely in Firebase
 let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -1070,6 +1071,18 @@ async function doLogin(){
 
   setLoading('login-btn', true, '⏳ Entrando...')
   try {
+    // Server-side rate limit check
+    try {
+      const checkRateLimit = httpsCallable(functions, 'checkLoginRateLimit')
+      const rateResult = await checkRateLimit({})
+      if (!rateResult.data.allowed) {
+        showToast(rateResult.data.message || 'Muitas tentativas. Tente novamente mais tarde.', 'error')
+        return
+      }
+    } catch (rateErr) {
+      console.warn('Rate limit check failed, proceeding anyway:', rateErr)
+    }
+
     let emailToUse = input
     if(!input.includes('@')){
       emailToUse = input.toLowerCase() + '@cinecash.com.br'
@@ -1955,6 +1968,34 @@ async function requestWithdrawal(){
   const minVids = minVidsSnap.exists() ? Number(minVidsSnap.val()) : 5
   if(Number(u.videosWatched||0) < minVids){
     return showToast('Você precisa assistir pelo menos '+minVids+' vídeos para sacar!','error')
+  }
+
+  // Server-side validation check
+  try {
+    const validateWithdrawal = httpsCallable(functions, 'validateWithdrawal')
+    const validationResult = await validateWithdrawal({
+      amount: amount,
+      balance: Number(u.balance||0),
+      videosWatched: Number(u.videosWatched||0)
+    })
+    if (!validationResult.data.valid) {
+      showToast(validationResult.data.message || 'Validação falhou', 'error')
+      return
+    }
+  } catch (valErr) {
+    console.warn('Server-side validation failed, using client-side:', valErr)
+  }
+
+  // Server-side rate limit check
+  try {
+    const checkWithdrawalRateLimit = httpsCallable(functions, 'checkWithdrawalRateLimit')
+    const rateResult = await checkWithdrawalRateLimit({})
+    if (!rateResult.data.allowed) {
+      showToast(rateResult.data.message || 'Muitas solicitações. Tente novamente mais tarde.', 'error')
+      return
+    }
+  } catch (rateErr) {
+    console.warn('Withdrawal rate limit check failed, proceeding anyway:', rateErr)
   }
 
   // Create withdrawal request
