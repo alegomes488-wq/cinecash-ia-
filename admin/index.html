@@ -13,15 +13,19 @@
   <body>
     <div class="card">
       <h2>Deploy Terminal (MVP)</h2>
-      <p>This is a lightweight deploy panel. The button below prepares a commit message and shows the deploy command to run on the server.</p>
-      <p><strong>Note:</strong> For security reasons this page does not run git commands in your browser. Use the shown command on your host or CI.</p>
+      <p>This is a lightweight deploy panel. You can either generate a git deploy command, or trigger a protected deploy API (if the server has the admin API running).</p>
+      <p><strong>Note:</strong> The deploy API requires a secret token. Do not expose this page on a public network without authentication.</p>
 
       <div>
         <button id="btn-prepare">Prepare Deploy</button>
+        <button id="btn-api" style="margin-left:12px">Trigger Deploy API</button>
       </div>
 
       <h3>Generated Deploy Command</h3>
       <pre id="cmd">(press &quot;Prepare Deploy&quot; to generate)</pre>
+
+      <h3>API Result</h3>
+      <pre id="api-result">(no API call yet)</pre>
     </div>
 
     <script>
@@ -30,6 +34,18 @@
         const message = `chore(deploy): deploy from IA Developer Hub - ${now}`;
         const cmd = `git add -A && git commit -m "${message}" && git push origin HEAD:main`;
         document.getElementById('cmd').textContent = cmd;
+      });
+
+      document.getElementById('btn-api').addEventListener('click', async function() {
+        const token = prompt('Deploy token (x-ia-deploy-token header)');
+        if (!token) return alert('token required');
+        try {
+          const res = await fetch('/api/deploy', { method: 'POST', headers: { 'x-ia-deploy-token': token } });
+          const body = await res.json();
+          document.getElementById('api-result').textContent = JSON.stringify(body, null, 2);
+        } catch (err) {
+          document.getElementById('api-result').textContent = String(err);
+        }
       });
     </script>
   </body>
