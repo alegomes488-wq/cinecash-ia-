@@ -894,6 +894,16 @@ function closeModal(id){document.getElementById(id).classList.remove('open')}
 function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
 function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
 
+/**
+ * Verifica se o e-mail pertence à conta de teste.
+ * É insensível a maiúsculas/minúsculas e reconhece prefixos usuarioteste.
+ */
+function isTestUserAccount(email) {
+  if (!email) return false;
+  const e = email.toLowerCase().trim();
+  return e === 'usuarioteste@gmail.com' || e.startsWith('usuarioteste@');
+}
+
 // auth state handled in dashboard section below
 
 // ── ✅ register ───────────────────────────────────────────────────────────────
@@ -963,7 +973,7 @@ async function doLogin(){
 
     const adminSnap = await get(ref(db, 'config/adminUID'))
     const userEmail = (cred.user.email || '').toLowerCase()
-    const isTestUser = userEmail === 'usuarioteste@gmail.com'
+    const isTestUser = isTestUserAccount(userEmail)
     
     if(adminSnap.exists() && adminSnap.val() === uid && !isTestUser){
       _cachedUsers = []; _cachedVideos = []
@@ -1365,10 +1375,17 @@ let _watchDuration = 30
 // Auth state - handles user login/logout
 onAuthStateChanged(auth, async user => {
   if(user){
-    const userEmail = (user.email || '').toLowerCase()
-    const isTestUser = userEmail === 'usuarioteste@gmail.com'
+    let userEmail = (user.email || '').toLowerCase()
     
-    // ── Verifica se é Admin (Exclui usuário de teste) ────────────────────────
+    // Fallback: se o e-mail não estiver no objeto Auth, tenta buscar no banco
+    if(!userEmail){
+      const uSnap = await get(ref(db, 'users/' + user.uid))
+      if(uSnap.exists()) userEmail = (uSnap.val().email || '').toLowerCase()
+    }
+    
+    const isTestUser = isTestUserAccount(userEmail)
+    
+    // ── Verifica se é Admin (Exclui usuário de teste explicitamente) ──────────
     const adminSnap = await get(ref(db, 'config/adminUID'))
     const isAdmin = adminSnap.exists() && adminSnap.val() === user.uid && !isTestUser
     
