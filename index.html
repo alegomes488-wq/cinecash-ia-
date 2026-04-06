@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.gstatic.com https://*.googleapis.com https://*.google.com https://youtube.com https://*.youtube.com https://quge5.com https://vemtoutcheeg.com https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://*.gstatic.com https://*.firebaseio.com https://cdnjs.cloudflare.com; frame-src https://www.youtube.com https://youtube.com; connect-src https://*.firebaseio.com https://*.googleapis.com https://www.googleapis.com https://youtube.googleapis.com">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>CineCash IA</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -81,6 +78,7 @@
     .tab-btn:hover{color:#d1d5db;background:#1f2937}
     .tab-btn.active{background:#1f2937;color:#fff;border:1px solid #374151}
     .tab-panel{display:none;width:100%;min-height:100%}.tab-panel.active{display:block;width:100%;min-height:calc(100vh - 100px);overflow:visible}
+    .panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
     .panel-card{background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px}
     .panel-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:18px}
     .search-input-wrap{position:relative;margin-bottom:20px}
@@ -936,6 +934,7 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db   = getDatabase(app);
 
+const ADMIN_CREDS = null; // credentials stored securely in Firebase
 let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -944,15 +943,6 @@ function fmt(v){return 'R$ '+Number(v||0).toFixed(2)}
 function fmtU(v){return '$'+Number(v||0).toFixed(2)}
 function setLoading(id,on,label){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.textContent=on?'⏳ Aguarde...':label}
 function showToast(msg,type='info'){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 function showSpace(type){
   const user = document.getElementById('app-user-space');
   const admin = document.getElementById('app-admin-space');
@@ -981,50 +971,6 @@ function closeModal(id){document.getElementById(id).classList.remove('open')}
 function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
 function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
 
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000
-const RATE_LIMIT_MAX = 10
-const WITHDRAWAL_LIMIT_WINDOW = 60 * 60 * 1000
-const WITHDRAWAL_LIMIT_MAX = 3
-
-async function checkRateLimitClient(key, max, windowMs) {
-  try {
-    const now = Date.now()
-    const snap = await get(ref(db, 'rateLimit/' + key))
-    if (snap.exists()) {
-      const data = snap.val()
-      const windowStart = data.windowStart || now
-      if (now - windowStart < windowMs) {
-        if (data.attempts >= max) {
-          return { allowed: false, remaining: 0, resetIn: Math.ceil((windowStart + windowMs - now) / 60000) }
-        }
-        return { allowed: true, remaining: max - data.attempts }
-      }
-    }
-    return { allowed: true, remaining: max }
-  } catch { return { allowed: true, remaining: max } }
-}
-
-async function incrementRateLimit(key) {
-  try {
-    const now = Date.now()
-    const snap = await get(ref(db, 'rateLimit/' + key))
-    if (snap.exists()) {
-      const data = snap.val()
-      if (now - (data.windowStart || now) < RATE_LIMIT_WINDOW) {
-        await update(ref(db, 'rateLimit/' + key), { attempts: (data.attempts || 0) + 1 })
-      } else {
-        await set(ref(db, 'rateLimit/' + key), { windowStart: now, attempts: 1 })
-      }
-    } else {
-      await set(ref(db, 'rateLimit/' + key), { windowStart: now, attempts: 1 })
-    }
-  } catch {}
-}
-
-function getClientKey() {
-  return localStorage.getItem('_cc_did') || 'anon_' + Math.random().toString(36).substr(2, 9)
-}
-
 /**
  * Verifica se o e-mail pertence à conta de teste.
  * É insensível a maiúsculas/minúsculas e reconhece prefixos usuarioteste.
@@ -1049,10 +995,7 @@ async function doRegister(){
   if(!firstName||!lastName||!display||!email||!pass||!confirm)return showToast('Preencha todos os campos!','error')
   if(display.includes(' '))return showToast('O apelido não pode ter espaços!','error')
   if(pass.length<8)return showToast('A senha deve ter no mínimo 8 caracteres!','error')
-  if(!/^(?=.*[A-Z])/.test(pass))return showToast('A senha deve ter pelo menos uma letra maiúscula!','error')
-  if(!/^(?=.*[a-z])/.test(pass))return showToast('A senha deve ter pelo menos uma letra minúscula!','error')
-  if(!/^(?=.*\d)/.test(pass))return showToast('A senha deve ter pelo menos um número!','error')
-  if(!/^(?=.*[@$!%*?&])/.test(pass))return showToast('A senha deve ter pelo menos um caractere especial (@$!%*?&)!','error')
+  if(pass[0]!==pass[0].toUpperCase())return showToast('A senha deve começar com letra maiúscula!','error')
   if(pass!==confirm)return showToast('As senhas não coincidem!','error')
   
   setLoading('reg-btn',true,'Criar Conta')
@@ -1089,8 +1032,7 @@ async function doRegister(){
 
 // ── ✅ login ──────────────────────────────────────────────────────────────────
 async function doLogin(){
-  if(checkLoginBlocked()) return
-  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado por tentativas falhas. Aguarde alguns minutos.','error')
+  if(_fraudLog && _fraudLog.blocked) return showToast('Acesso bloqueado por tentativas falhas. Aguarde 5 minutos.','error')
 
   const input = document.getElementById('login-email').value.trim()
   const pass  = document.getElementById('login-password').value
@@ -1098,14 +1040,6 @@ async function doLogin(){
 
   setLoading('login-btn', true, '⏳ Entrando...')
   try {
-    const clientKey = getClientKey()
-    const rateCheck = await checkRateLimitClient('login_' + clientKey, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)
-    if (!rateCheck.allowed) {
-      showToast(rateCheck.message || `Muitas tentativas. Tente novamente em ${rateCheck.resetIn} minutos.`, 'error')
-      setLoading('login-btn', false, 'Entrar')
-      return
-    }
-
     let emailToUse = input
     if(!input.includes('@')){
       emailToUse = input.toLowerCase() + '@cinecash.com.br'
@@ -1227,14 +1161,6 @@ function attachRealtimeListeners(){
   onValue(ref(db,'users'),snap=>{
     _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
     updateStats();renderUsersTable();updateLucros()
-    
-    const onlineNow = _cachedUsers.filter(u=>u.isOnline===true).length
-    const onlineEl = document.getElementById('online-now')
-    if(onlineEl) onlineEl.textContent = onlineNow
-    
-    if(document.getElementById('tab-usuarios')?.classList.contains('active')){
-      renderOnlineUsers(_cachedUsers.filter(u=>u.isOnline===true))
-    }
   })
   onValue(ref(db,'videos'),snap=>{
     _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
@@ -1302,17 +1228,17 @@ function renderUsersTable(){
   if(!tbody)return
   if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>';document.getElementById('users-footer').textContent='Nenhum usuário encontrado';return}
   tbody.innerHTML=users.map(u=>`<tr>
-    <td style="font-size:11px;color:#6b7280;font-family:monospace">${escapeHtml(u.uid.substring(0,16))}...</td>
+    <td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td>
     <td>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:8px;height:8px;border-radius:50%;background:${u.isOnline?'#34d399':'#4b5563'};box-shadow:${u.isOnline?'0 0 8px #34d399':''}"></div>
         <div class="user-names">
-          <div class="name">${escapeHtml(u.fullname||'-')}</div>
+          <div class="name">${u.fullname||'-'}</div>
           <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'Offline')}</div>
         </div>
       </div>
     </td>
-    <td>${escapeHtml(u.email||'-')}</td>
+    <td>${u.email||'-'}</td>
     <td style="color:#a78bfa">${u.videosWatched||0}</td>
     <td style="color:#34d399">R$ ${Number(u.balance||0).toFixed(2)}</td>
     <td>${fmtDate(u.createdAt)}</td>
@@ -1359,7 +1285,7 @@ async function addVideo(){
 function renderVideosTable(){
   const videos=_cachedVideos;const tbody=document.getElementById('videos-tbody');if(!tbody)return
   if(!videos.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:24px">Nenhum vídeo cadastrado</td></tr>';document.getElementById('videos-footer').textContent='Nenhum vídeo cadastrado';return}
-  tbody.innerHTML=videos.map(v=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${escapeHtml(v.id.substring(0,12))}...</td><td style="color:#fff;font-weight:500">${escapeHtml(v.title)}</td><td><a href="${escapeHtml(v.url)}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${escapeHtml(v.url.substring(0,38))}${v.url.length>38?'...':''}</a></td><td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td><td>${fmtDate(v.createdAt)}</td><td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td></tr>`).join('')
+  tbody.innerHTML=videos.map(v=>`<tr><td style="font-size:11px;color:#6b7280;font-family:monospace">${v.id.substring(0,12)}...</td><td style="color:#fff;font-weight:500">${v.title}</td><td><a href="${v.url}" target="_blank" style="color:#60a5fa;font-size:12px;text-decoration:none">${v.url.substring(0,38)}${v.url.length>38?'...':''}</a></td><td style="color:#34d399">R$ ${Number(v.reward||0).toFixed(2)}</td><td>${fmtDate(v.createdAt)}</td><td><button class="action-btn action-del" onclick="window.deleteVideo('${v.id}')">Remover</button></td></tr>`).join('')
   document.getElementById('videos-footer').textContent=videos.length+' vídeo'+(videos.length!==1?'s':'')+' cadastrado'+(videos.length!==1?'s':'')
 }
 
@@ -1523,32 +1449,18 @@ onValue(ref(db, 'config/maintenance'), snap => {
 })
 
 // ── Anti-fraude: detecta tentativas suspeitas ─────────────
-const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false, lockoutUntil: 0 }
+const _fraudLog = { attempts: 0, lastAttempt: 0, blocked: false }
 
 function registerLoginFailure(){
   const now = Date.now()
   if(now - _fraudLog.lastAttempt > 5 * 60 * 1000) _fraudLog.attempts = 0
   _fraudLog.attempts++
   _fraudLog.lastAttempt = now
-  
   if(_fraudLog.attempts >= 3){
     _fraudLog.blocked = true
-    const lockoutDuration = Math.min(5 * 60 * 1000 * Math.pow(2, _fraudLog.attempts - 3), 30 * 60 * 1000)
-    _fraudLog.lockoutUntil = now + lockoutDuration
-    showToast(`Muitas tentativas incorretas. Acesso bloqueado por ${Math.ceil(lockoutDuration/60000)} minutos.`, 'error')
-    setTimeout(()=>{ _fraudLog.blocked = false; _fraudLog.attempts = 0 }, lockoutDuration)
-  } else {
-    showToast('Email ou senha incorretos. Tentativas restantes: ' + (3 - _fraudLog.attempts), 'error')
+    showToast('Muitas tentativas incorretas. Acesso bloqueado por 5 minutos.', 'error')
+    setTimeout(()=>{ _fraudLog.blocked = false; _fraudLog.attempts = 0 }, 5*60*1000)
   }
-}
-
-function checkLoginBlocked(){
-  if(_fraudLog.blocked && Date.now() < _fraudLog.lockoutUntil){
-    const remaining = Math.ceil((_fraudLog.lockoutUntil - Date.now())/60000)
-    showToast('Acesso bloqueado. Tente novamente em ' + remaining + ' minutos.', 'error')
-    return true
-  }
-  return false
 }
 
 function antiFraud_checkVideoWatch(uid, videoId){
@@ -1994,23 +1906,12 @@ async function requestWithdrawal(){
   const u = snap.val()
   if(Number(u.balance||0) < amount) return showToast('Saldo insuficiente!','error')
 
-  // Validate withdrawal (client-side)
+  // Verify minimum videos watched
   const minVidsSnap = await get(ref(db,'config/minVideosForWithdrawal'))
   const minVids = minVidsSnap.exists() ? Number(minVidsSnap.val()) : 5
   if(Number(u.videosWatched||0) < minVids){
     return showToast('Você precisa assistir pelo menos '+minVids+' vídeos para sacar!','error')
   }
-
-  // Rate limit check for withdrawals
-  const wdKey = 'withdraw_' + _currentUser.uid
-  const wdRateCheck = await checkRateLimitClient(wdKey, WITHDRAWAL_LIMIT_MAX, WITHDRAWAL_LIMIT_WINDOW)
-  if (!wdRateCheck.allowed) {
-    showToast(wdRateCheck.message || `Muitas solicitações. Tente novamente em ${wdRateCheck.resetIn} minutos.`, 'error')
-    return
-  }
-
-  // Increment withdrawal counter
-  await incrementRateLimit(wdKey)
 
   // Create withdrawal request
   const wRef = push(ref(db,'withdrawals'))
@@ -2201,7 +2102,9 @@ async function fetchYouTubeVideos(){
       })
     }
 
-
+    localStorage.setItem('_yt_last_fetch', String(now))
+    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
+  } catch(e){
     console.warn('YouTube fetch error:', e)
   }
 }
@@ -2594,7 +2497,7 @@ async function runAICheck(){
 
   const total = users.length
   const clean = users.filter(u=>!suspicious.includes(u.uid)).length
-  alerts.innerHTML = `
+  report.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:16px">
       <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px 16px;flex:1;text-align:center">
         <div style="font-size:20px;font-weight:700;color:#34d399">${total}</div>
@@ -2620,142 +2523,8 @@ async function blockUser(uid){
   try{
     await update(ref(db,'users/'+uid),{ status:'inativo' })
     showToast('Usuário bloqueado!','success')
-    aiNotifyAdmin('🚫 Usuário bloqueado automaticamente pela IA', 'security')
     runAICheck()
   }catch(err){ showToast('Erro: '+err.message,'error') }
-}
-
-let _aiMonitoringInterval = null
-let _blockedTodayCount = 0
-
-async function aiNotifyAdmin(msg, type = 'action'){
-  const panel = document.getElementById('ai-alerts-panel')
-  if(!panel) return
-  const time = new Date().toLocaleTimeString('pt-BR')
-  const alertHtml = `<div style="padding:8px 12px;background:${type === 'security' ? '#1c0000' : '#0d1117'};border-left:3px solid ${type === 'security' ? '#f87171' : '#fbbf24'};margin-bottom:8px;border-radius:4px">
-    <div style="font-size:11px;color:#6b7280">${time}</div>
-    <div style="font-size:12px;color:${type === 'security' ? '#f87171' : '#fbbf24'}">${msg}</div>
-  </div>`
-  panel.innerHTML = alertHtml + panel.innerHTML
-  await push(ref(db, 'ia_logs'), { msg, type, timestamp: serverTimestamp() })
-}
-
-async function startAIMonitoring(){
-  if(_aiMonitoringInterval) return
-  
-  document.getElementById('ai-status').innerHTML = '🔴 IA Ativa - Monitorando...'
-  document.getElementById('ai-status').style.color = '#34d399'
-  _blockedTodayCount = 0
-  
-  await aiNotifyAdmin('🤖 Monitoramento IA iniciado. Analisando usuários...', 'action')
-  
-  _aiMonitoringInterval = setInterval(async () => {
-    await runAIMonitorCycle()
-  }, 5000)
-  
-  await runAIMonitorCycle()
-}
-
-function stopAIMonitoring(){
-  if(_aiMonitoringInterval){
-    clearInterval(_aiMonitoringInterval)
-    _aiMonitoringInterval = null
-  }
-  document.getElementById('ai-status').innerHTML = '⏹ IA Inativa'
-  document.getElementById('ai-status').style.color = '#6b7280'
-  aiNotifyAdmin('⏹ Monitoramento IA parado', 'action')
-}
-
-async function runAIMonitorCycle(){
-  try{
-    const usersSnap = await get(ref(db, 'users'))
-    const devicesSnap = await get(ref(db, 'devices'))
-    const withdrawalsSnap = await get(ref(db, 'withdrawals'))
-    
-    if(!usersSnap.exists()) return
-    
-    const users = Object.entries(usersSnap.val()).map(([uid,u])=>({...u,uid}))
-    const devices = devicesSnap.exists() ? devicesSnap.val() : {}
-    const withdrawals = withdrawalsSnap.exists() ? Object.values(withdrawalsSnap.val()) : []
-    
-    const now = Date.now()
-    const dayMs = 24*60*60*1000
-    const hourMs = 60*60*1000
-    
-    let onlineUsers = []
-    let suspiciousUsers = []
-    
-    for(const u of users){
-      if(u.status !== 'ativo') continue
-      
-      const isOnline = u.isOnline === true
-      const devList = devices[u.uid] ? Object.keys(devices[u.uid]) : []
-      const videosWatched = u.videosWatched || 0
-      const balance = Number(u.balance||0)
-      const joinedDays = Math.max(1, Math.floor((now - u.createdAt) / dayMs))
-      const vidsPerDay = videosWatched / joinedDays
-      const userWithdrawals = withdrawals.filter(w=>w.uid===u.uid && w.status==='approved')
-      
-      const issues = []
-      
-      if(isOnline) onlineUsers.push(u)
-      
-      if(devList.length > 2) issues.push('Múltiplos dispositivos ('+devList.length+')')
-      if(vidsPerDay > 100) issues.push('Vídeos anormais ('+vidsPerDay.toFixed(0)+'/dia)')
-      if(balance > 50 && userWithdrawals.length === 0 && videosWatched > 50) issues.push('Saldo alto sem saques')
-      if(u.checkInStreak > 30 && videosWatched < 10) issues.push('Streak sem vídeos')
-      
-      if(issues.length > 0){
-        suspiciousUsers.push({user: u, issues})
-        
-        for(const issue of issues){
-          await aiNotifyAdmin(`⚠️ ${u.fullname||u.display}: ${issue}`, 'security')
-        }
-        
-        if(issues.length >= 2){
-          await blockUser(u.uid)
-          _blockedTodayCount++
-        }
-      }
-    }
-    
-    document.getElementById('online-now').textContent = onlineUsers.length
-    document.getElementById('suspicious-count').textContent = suspiciousUsers.length
-    document.getElementById('total-users').textContent = users.filter(u=>u.status==='ativo').length
-    document.getElementById('blocked-today').textContent = _blockedTodayCount
-    
-    renderOnlineUsers(onlineUsers)
-    
-  } catch(err){
-    console.error('AI Monitor error:', err)
-  }
-}
-
-function renderOnlineUsers(onlineUsers){
-  const list = document.getElementById('online-users-list')
-  if(!list) return
-  
-  if(onlineUsers.length === 0){
-    list.innerHTML = '<div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Nenhum usuário online no momento</div>'
-    return
-  }
-  
-  list.innerHTML = onlineUsers.map(u => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#0d1117;border:1px solid #1f2937;border-radius:10px">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:40px;height:40px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">${(u.display||u.fullname||'U')[0].toUpperCase()}</div>
-        <div>
-          <div style="font-weight:600;color:#fff;font-size:13px">${u.fullname||u.display}</div>
-          <div style="font-size:11px;color:#6b7280">${u.email}</div>
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:12px;color:#a78bfa">🎬 ${u.videosWatched||0} vídeos</div>
-        <div style="font-size:12px;color:#34d399">💰 R$ ${Number(u.balance||0).toFixed(2)}</div>
-        <div style="font-size:10px;color:#34d399">🟢 Online</div>
-      </div>
-    </div>
-  `).join('')
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2822,21 +2591,9 @@ async function adminCreateUser(){
     document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter no mínimo 8 caracteres!</span>'
     return showToast('Senha mínima de 8 caracteres!','error')
   }
-  if(!/^(?=.*[A-Z])/.test(pass)){
-    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos uma maiúscula!</span>'
-    return showToast('Senha deve ter maiúscula!','error')
-  }
-  if(!/^(?=.*[a-z])/.test(pass)){
-    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos uma minúscula!</span>'
-    return showToast('Senha deve ter minúscula!','error')
-  }
-  if(!/^(?=.*\d)/.test(pass)){
-    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter pelo menos um número!</span>'
-    return showToast('Senha deve ter número!','error')
-  }
-  if(!/^(?=.*[@$!%*?&])/.test(pass)){
-    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve ter (@$!%*?&)!</span>'
-    return showToast('Senha deve ter caractere especial!','error')
+  if(pass[0] !== pass[0].toUpperCase()){
+    document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">Senha deve começar com letra maiúscula!</span>'
+    return showToast('Senha deve começar com maiúscula!','error')
   }
   if(pass !== confirm){
     document.getElementById('admin-reg-status').innerHTML = '<span style="color:#f87172">As senhas não coincidem!</span>'
@@ -2958,8 +2715,6 @@ window.toggleMaintenance=toggleMaintenance
 window.fetchYouTubeVideos=fetchYouTubeVideos
 window.showAdAfterVideo=showAdAfterVideo
 window.runAICheck=runAICheck
-window.startAIMonitoring=startAIMonitoring
-window.stopAIMonitoring=stopAIMonitoring
 window.blockUser=blockUser
 window.toggleSupport=toggleSupport
 window.saveSupport=saveSupport
