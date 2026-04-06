@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Admin - Deploy</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 24px; }
+      .card { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 640px; }
+      button { padding: 10px 14px; font-size: 16px; }
+      pre { background:#f6f6f6; padding:8px; overflow:auto }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Deploy Terminal (MVP)</h2>
+      <p>This is a lightweight deploy panel. The button below prepares a commit message and shows the deploy command to run on the server.</p>
+      <p><strong>Note:</strong> For security reasons this page does not run git commands in your browser. Use the shown command on your host or CI.</p>
+
+      <div>
+        <button id="btn-prepare">Prepare Deploy</button>
+      </div>
+
+      <h3>Generated Deploy Command</h3>
+      <pre id="cmd">(press &quot;Prepare Deploy&quot; to generate)</pre>
+    </div>
+
+    <script>
+      document.getElementById('btn-prepare').addEventListener('click', function() {
+        const now = new Date().toISOString();
+        const message = `chore(deploy): deploy from IA Developer Hub - ${now}`;
+        const cmd = `git add -A && git commit -m "${message}" && git push origin HEAD:main`;
+        document.getElementById('cmd').textContent = cmd;
+      });
+    </script>
+  </body>
+</html>

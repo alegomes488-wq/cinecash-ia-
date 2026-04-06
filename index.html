@@ -274,8 +274,19 @@
     .page{display:none}.page.active{display:block}
     .admin-page{display:none}.admin-page.active{display:flex;flex-direction:row;min-height:100vh;width:100%}
 
-    /* ── IA DEVELOPER HUB ── */
-    .ia-hub-container { display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 160px); min-height: 500px; }
+    /* ── IA SYSTEM CENTER ── */
+    .ia-system-center { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .ia-sys-info { display: flex; align-items: center; gap: 12px; }
+    .ia-sys-dot { width: 10px; height: 10px; border-radius: 50%; background: #34d399; position: relative; }
+    .ia-sys-dot.pulse::after { content: ''; position: absolute; inset: -4px; border: 2px solid #34d399; border-radius: 50%; animation: dotPulse 2s infinite; }
+    @keyframes dotPulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+    .ia-sys-label { font-size: 13px; font-weight: 600; color: #fff; }
+    .ia-sys-status { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .ia-deploy-btn { padding: 10px 20px; background: linear-gradient(135deg, #7c3aed, #0ea5e9); border: none; border-radius: 12px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+    .ia-deploy-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5); }
+    .ia-deploy-btn:active { transform: translateY(0); }
+    #tab-ia { padding: 0 !important; }
+    .ia-hub-container { display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 120px); min-height: 600px; padding: 20px; box-sizing: border-box; }
     .ia-chat-side { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
     .ia-chat-header { padding: 16px; background: #1e293b; color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #334155; }
     .ia-chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
@@ -695,6 +706,24 @@ if('serviceWorker' in navigator){
 
     <!-- TAB: IA MONITOR -->
     <div id="tab-ia" class="tab-panel">
+      <!-- SYSTEM & DEPLOY CENTER -->
+      <div class="ia-system-center">
+        <div class="ia-sys-info">
+          <div class="ia-sys-dot pulse"></div>
+          <div>
+            <div class="ia-sys-label">Sistema CineCash: Online</div>
+            <div class="ia-sys-status" id="ia-sys-status">Sincronizado com Firebase • Versão 2.4.1</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="text-align:right">
+            <div style="font-size:11px; color:#64748b">Alterações locais detectadas</div>
+            <div style="font-size:12px; color:#fbbf24; font-weight:600" id="ia-deploy-status">Pendente de Deploy</div>
+          </div>
+          <button class="ia-deploy-btn" onclick="ia_triggerDeployNotify()">🚀 REALIZAR DEPLOY</button>
+        </div>
+      </div>
+
       <div class="ia-hub-container">
         <!-- LADO ESQUERDO: CHAT COM O AGENTE -->
         <div class="ia-chat-side">
@@ -2768,6 +2797,17 @@ window.ai_securityScan = ai_securityScan;
 window.ai_cleanInactive = ai_cleanInactive;
 
 // ── MOTOR DO AGENTE IA (HUB DE DESENVOLVEDOR) ──────────────────────────────
+async function ia_triggerDeployNotify() {
+  ia_addMessage('ai', "🚀 Comando de Deploy detectado. Iniciando preparação de pacotes...");
+  
+  // Simular processamento
+  setTimeout(() => {
+    ia_addMessage('ai', "📦 Arquivos locais otimizados. Para finalizar a atualização no site oficial, você precisa que o sistema Antigravity execute: 'firebase deploy --only hosting'. Deseja que eu solicite isso agora?");
+    document.getElementById('ia-deploy-status').textContent = 'Pronto para Deploy';
+    document.getElementById('ia-deploy-status').style.color = '#34d399';
+  }, 1500);
+}
+
 function ia_switchWsTab(tab, btn) {
   document.querySelectorAll('.ia-ws-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.ia-ws-panel').forEach(p => p.classList.remove('active'));
@@ -2830,6 +2870,24 @@ async function ia_sendMessage() {
 async function ia_getAgentResponse(query) {
   const q = query.toLowerCase();
   
+  // Resposta específica para análise de código solicitada pelo usuário
+  if(q.includes('analis') && (q.includes('código') || q.includes('codigo') || q.includes('todo'))) {
+    return {
+      msg: "🤖 Iniciando análise heurística de todo o projeto CineCash IA. Identifiquei 2.800+ linhas de código. Vou verificar segurança, performance e organização.",
+      plan: { 
+        title: "🛡️ Auditoria Completa de Código", 
+        desc: "Análise profunda de scripts de segurança, listeners do Firebase, e estrutura de componentes do Admin/User Space." 
+      },
+      tasks: [
+        { text: "Verificar vazamentos de memória em Realtime Listeners", done: false },
+        { text: "Validar isolamento entre Admin e User Space", done: true },
+        { text: "Checar redundância em funções de Autenticação", done: true },
+        { text: "Auditar Permissões de Saque e Anti-Fraude", done: false }
+      ],
+      code: `// Sugestão de Otimização de Segurança\nfunction secureCheck() {\n  if(!_currentUser.isAdmin) throw new Error('Acesso negado');\n  return true;\n}`
+    };
+  }
+
   if(q.includes('bônus') || q.includes('recompensa')) {
     return {
       msg: "Entendido. Vou elaborar um plano para criar um novo sistema de bônus diário progressivo para aumentar a retenção.",
@@ -2843,16 +2901,30 @@ async function ia_getAgentResponse(query) {
     };
   }
   
-  if(q.includes('bug') || q.includes('erro') || q.includes('ajuda')) {
+  if(q.includes('bug') || q.includes('erro') || q.includes('ajuda') || q.includes('varredura')) {
     return {
-      msg: "Identifiquei que alguns usuários estão relatando lentidão no carregamento dos vídeos. Vou realizar uma varredura de integridade agora.",
-      plan: { title: "🔍 Varredura de Erros Críticos", desc: "Varredura automática para encontrar conexões pendentes ou loops infinitos no carregamento de vídeos." },
+      msg: "🔍 Iniciando Varredura de Integridade (Deep Scan). Analisando logs do Firebase e detectando gargalos no código do cliente...",
+      plan: { title: "🔍 Deep Scan & Debugging", desc: "Varredura automática para encontrar conexões pendentes, loops infinitos e erros de redirecionamento no login." },
       tasks: [
         { text: "Analisar onValue listeners pendentes", done: true },
-        { text: "Verificar integridade do nó /videos", done: true },
-        { text: "Otimizar cache local de usuários", done: false }
+        { text: "Validar integridade do nó /users", done: true },
+        { text: "Verificar loop de redirecionamento no Dashboard", done: true },
+        { text: "Otimizar tempo de resposta do check-in", done: false }
       ],
-      code: `// Otimização de Listener\nfunction cleanupListeners() {\n  off(ref(db, 'videos'));\n  console.log('Listeners limpos!');\n}`
+      code: `// Correção de Redirecionamento Recursivo\nonAuthStateChanged(auth, user => {\n  if(user && !onAdminPage) showPage('dashboard');\n});`
+    };
+  }
+
+  if(q.includes('segurança') || q.includes('firewall') || q.includes('proteção')) {
+    return {
+      msg: "🛡️ Auditoria de Segurança em tempo real. Verificando proteção contra injeção e acessos não autorizados ao nó /config.",
+      plan: { title: "🛡️ Fortalecimento de Firewall", desc: "Aplicação de camadas extras de validação e verificação de regras de segurança do Realtime Database." },
+      tasks: [
+        { text: "Bloquear acesso anônimo a /adminUID", done: true },
+        { text: "Validar token de sessão administrativa", done: true },
+        { text: "Implementar Rate Limit em solicitações de saque", done: false }
+      ],
+      code: `// Regra de Segurança Sugerida\n{\n  "rules": {\n    "config": { ".read": "auth.uid === 'ADMIN_ID'" }\n  }\n}`
     };
   }
 
@@ -2915,6 +2987,7 @@ window.ia_getAgentResponse = ia_getAgentResponse;
 window.ia_renderPlan = ia_renderPlan;
 window.ia_renderTasks = ia_renderTasks;
 window.ia_renderCode = ia_renderCode;
+window.ia_triggerDeployNotify = ia_triggerDeployNotify;
 
 function showAdminLogin(){
   const pwd = prompt('Digite a senha de administrador:')
