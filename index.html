@@ -1763,10 +1763,8 @@ async function loadUserVideos(){
 
   const videos = Object.entries(snap.val()).map(([id,v])=>({...v,id}))
   const u = _currentUser
-  const watchedList = u.watchedVideos || {}
 
   grid.innerHTML = videos.map(v=>{
-    const watched = watchedList[v.id]
     const thumb = v.thumbnail ? `<img src="${v.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:0">` : '📹'
     const catBadge = v.category ? `<span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px">${v.category}</span>` : ''
     return `<div class="video-card">
@@ -1777,8 +1775,8 @@ async function loadUserVideos(){
       </div>
       <div class="video-info">
         <div class="video-title">${v.title}</div>
-        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})" ${watched?'disabled':''}>
-          ${watched ? '✅ Já assistido' : '▶ Assistir e ganhar'}
+        <button class="watch-btn" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})">
+          ▶ Assistir e ganhar
         </button>
       </div>
     </div>`
@@ -1787,12 +1785,6 @@ async function loadUserVideos(){
 
 async function startWatch(videoId, title, url, reward){
   if(!antiFraud_checkVideoWatch(_currentUser.uid, videoId)) return
-
-  // Check if already watched in DB
-  const snap = await get(ref(db,'users/'+_currentUser.uid+'/watchedVideos/'+videoId))
-  if(snap.exists()){
-    showToast('Você já assistiu este vídeo!','error'); return
-  }
 
   _watchVideoId = videoId
   _watchDuration = 30
@@ -2041,14 +2033,14 @@ const DEFAULT_REWARD = 0.02
 async function fetchYouTubeVideos(){
   const lastFetch = localStorage.getItem('_yt_last_fetch')
   const now = Date.now()
-  // Only fetch once per 6 hours
-  if(lastFetch && now - Number(lastFetch) < 6*60*60*1000) return
+  // Only fetch once per 1 hour (attract users with fresh content)
+  if(lastFetch && now - Number(lastFetch) < 1*60*60*1000) return
 
   try {
     // Fetch from random category
     const cat = YT_CATEGORIES[Math.floor(Math.random()*YT_CATEGORIES.length)]
-    const maxDuration = 'long' // PT30M or less handled by maxResults filter
-    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=10&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
+    const maxResults = 15
+    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults='+maxResults+'&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
 
     const res = await fetch(url)
     const data = await res.json()
@@ -2088,8 +2080,8 @@ async function fetchYouTubeVideos(){
       await remove(ref(db,'videos/'+id))
     }
 
-    // Add new videos
-    for(const v of validVideos.slice(0,5)){
+    // Add new videos (unlimited for now to attract users)
+    for(const v of validVideos.slice(0,20)){
       const newRef = push(ref(db,'videos'))
       await set(newRef,{
         title: v.snippet.title.substring(0,80),
