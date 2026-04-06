@@ -934,7 +934,6 @@ import {
   getDatabase, ref, set, get, update, remove, onValue, push, off,
   onDisconnect, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDpB0dNIjeS6KnFDt057rbm0QGrcX3AvJE",
@@ -951,7 +950,6 @@ const app  = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db   = getDatabase(app);
-const functions = getFunctions(app);
 
 let _cachedUsers=[], _cachedVideos=[], chartGrowth=null, chartWeekly=null, toastTimer;
 
@@ -997,6 +995,50 @@ function showPage(name){
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function togglePwd(id,btn){const inp=document.getElementById(id);if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}else{inp.type='password';btn.textContent='👁'}}
 function fbError(err){const m={'auth/email-already-in-use':'Este email já está cadastrado!','auth/invalid-email':'Email inválido!','auth/weak-password':'Senha fraca. Use pelo menos 6 caracteres.','auth/user-not-found':'Email ou senha incorretos!','auth/wrong-password':'Email ou senha incorretos!','auth/invalid-credential':'Email ou senha incorretos!','auth/too-many-requests':'Muitas tentativas. Tente novamente mais tarde.','auth/popup-closed-by-user':'Login com Google cancelado.','auth/network-request-failed':'Sem conexão. Verifique sua internet.'};return m[err.code]||('Erro: '+err.message)}
+
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000
+const RATE_LIMIT_MAX = 10
+const WITHDRAWAL_LIMIT_WINDOW = 60 * 60 * 1000
+const WITHDRAWAL_LIMIT_MAX = 3
+
+async function checkRateLimitClient(key, max, windowMs) {
+  try {
+    const now = Date.now()
+    const snap = await get(ref(db, 'rateLimit/' + key))
+    if (snap.exists()) {
+      const data = snap.val()
+      const windowStart = data.windowStart || now
+      if (now - windowStart < windowMs) {
+        if (data.attempts >= max) {
+          return { allowed: false, remaining: 0, resetIn: Math.ceil((windowStart + windowMs - now) / 60000) }
+        }
+        return { allowed: true, remaining: max - data.attempts }
+      }
+    }
+    return { allowed: true, remaining: max }
+  } catch { return { allowed: true, remaining: max } }
+}
+
+async function incrementRateLimit(key) {
+  try {
+    const now = Date.now()
+    const snap = await get(ref(db, 'rateLimit/' + key))
+    if (snap.exists()) {
+      const data = snap.val()
+      if (now - (data.windowStart || now) < RATE_LIMIT_WINDOW) {
+        await update(ref(db, 'rateLimit/' + key), { attempts: (data.attempts || 0) + 1 })
+      } else {
+        await set(ref(db, 'rateLimit/' + key), { windowStart: now, attempts: 1 })
+      }
+    } else {
+      await set(ref(db, 'rateLimit/' + key), { windowStart: now, attempts: 1 })
+    }
+  } catch {}
+}
+
+function getClientKey() {
+  return localStorage.getItem('_cc_did') || 'anon_' + Math.random().toString(36).substr(2, 9)
+}
 
 /**
  * Verifica se o e-mail pertence à conta de teste.
@@ -1071,16 +1113,12 @@ async function doLogin(){
 
   setLoading('login-btn', true, '⏳ Entrando...')
   try {
-    // Server-side rate limit check
-    try {
-      const checkRateLimit = httpsCallable(functions, 'checkLoginRateLimit')
-      const rateResult = await checkRateLimit({})
-      if (!rateResult.data.allowed) {
-        showToast(rateResult.data.message || 'Muitas tentativas. Tente novamente mais tarde.', 'error')
-        return
-      }
-    } catch (rateErr) {
-      console.warn('Rate limit check failed, proceeding anyway:', rateErr)
+    const clientKey = getClientKey()
+    const rateCheck = await checkRateLimitClient('login_' + clientKey, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)
+    if (!rateCheck.allowed) {
+      showToast(rateCheck.message || `Muitas tentativas. Tente novamente em ${rateCheck.resetIn} minutos.`, 'error')
+      setLoading('login-btn', false, 'Entrar')
+      return
     }
 
     let emailToUse = input
@@ -1963,40 +2001,23 @@ async function requestWithdrawal(){
   const u = snap.val()
   if(Number(u.balance||0) < amount) return showToast('Saldo insuficiente!','error')
 
-  // Verify minimum videos watched
+  // Validate withdrawal (client-side)
   const minVidsSnap = await get(ref(db,'config/minVideosForWithdrawal'))
   const minVids = minVidsSnap.exists() ? Number(minVidsSnap.val()) : 5
   if(Number(u.videosWatched||0) < minVids){
     return showToast('Você precisa assistir pelo menos '+minVids+' vídeos para sacar!','error')
   }
 
-  // Server-side validation check
-  try {
-    const validateWithdrawal = httpsCallable(functions, 'validateWithdrawal')
-    const validationResult = await validateWithdrawal({
-      amount: amount,
-      balance: Number(u.balance||0),
-      videosWatched: Number(u.videosWatched||0)
-    })
-    if (!validationResult.data.valid) {
-      showToast(validationResult.data.message || 'Validação falhou', 'error')
-      return
-    }
-  } catch (valErr) {
-    console.warn('Server-side validation failed, using client-side:', valErr)
+  // Rate limit check for withdrawals
+  const wdKey = 'withdraw_' + _currentUser.uid
+  const wdRateCheck = await checkRateLimitClient(wdKey, WITHDRAWAL_LIMIT_MAX, WITHDRAWAL_LIMIT_WINDOW)
+  if (!wdRateCheck.allowed) {
+    showToast(wdRateCheck.message || `Muitas solicitações. Tente novamente em ${wdRateCheck.resetIn} minutos.`, 'error')
+    return
   }
 
-  // Server-side rate limit check
-  try {
-    const checkWithdrawalRateLimit = httpsCallable(functions, 'checkWithdrawalRateLimit')
-    const rateResult = await checkWithdrawalRateLimit({})
-    if (!rateResult.data.allowed) {
-      showToast(rateResult.data.message || 'Muitas solicitações. Tente novamente mais tarde.', 'error')
-      return
-    }
-  } catch (rateErr) {
-    console.warn('Withdrawal rate limit check failed, proceeding anyway:', rateErr)
-  }
+  // Increment withdrawal counter
+  await incrementRateLimit(wdKey)
 
   // Create withdrawal request
   const wRef = push(ref(db,'withdrawals'))
