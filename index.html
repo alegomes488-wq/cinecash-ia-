@@ -582,23 +582,47 @@ if('serviceWorker' in navigator){
         </div>
       </div>
 
-      <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
+      <!-- MONITORAMENTO EM TEMPO REAL -->
       <div id="tab-usuarios" class="tab-panel">
       <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">Criar Novo Usuário</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Nome</label><input id="admin-reg-firstname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="João"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Sobrenome</label><input id="admin-reg-lastname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="Silva"></div>
+        <div class="panel-title">🔴 Monitoramento em Tempo Real</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px;font-weight:700;color:#34d399" id="online-now">0</div>
+            <div style="font-size:11px;color:#6b7280">Online Agora</div>
+          </div>
+          <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px;font-weight:700;color:#f87171" id="suspicious-count">0</div>
+            <div style="font-size:11px;color:#6b7280">Suspeitos</div>
+          </div>
+          <div style="background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px;font-weight:700;color:#60a5fa" id="total-users">0</div>
+            <div style="font-size:11px;color:#6b7280">Total Usuários</div>
+          </div>
+          <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px;font-weight:700;color:#fbbf24" id="blocked-today">0</div>
+            <div style="font-size:11px;color:#6b7280">Bloqueados Hoje</div>
+          </div>
         </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Apelido (nome que aparece no site)</label><input id="admin-reg-display" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="joao_silva"></div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Email</label><input id="admin-reg-email" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="email" placeholder="joao@email.com"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Senha</label><input id="admin-reg-password" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Mínimo 8 caracteres"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+          <button onclick="startAIMonitoring()" style="padding:8px 16px;background:#dc2626;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">🔴 Iniciar Monitoramento IA</button>
+          <button onclick="stopAIMonitoring()" style="padding:8px 16px;background:#374151;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">⏹ Parar</button>
+          <span id="ai-status" style="font-size:12px;color:#6b7280;margin-left:auto">IA Inativa</span>
         </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Confirmar Senha</label><input id="admin-reg-confirm" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Repita a senha"></div>
-        <button onclick="adminCreateUser()" style="margin-top:16px;padding:12px 24px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer">➕ Criar Usuário</button>
-        <div id="admin-reg-status" style="margin-top:8px;font-size:12px"></div>
+        <div style="background:#0d1117;border:1px solid #1f2937;border-radius:10px;padding:12px;max-height:200px;overflow-y:auto" id="ai-alerts-panel">
+          <div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Aguardando início do monitoramento...</div>
+        </div>
       </div>
+      
+      <!-- USUÁRIOS ONLINE EM TEMPO REAL -->
+      <div class="panel-card" style="margin-bottom:16px">
+        <div class="panel-title">👥 Usuários Online Agora</div>
+        <div id="online-users-list" style="display:flex;flex-direction:column;gap:8px">
+          <div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Nenhum usuário online no momento</div>
+        </div>
+      </div>
+      
+      <!-- GERENCIAMENTO DE USUÁRIOS -->
       <div class="panel-card">
         <div class="panel-title">Gerenciamento de Usuários</div>
         <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
@@ -1242,6 +1266,14 @@ function attachRealtimeListeners(){
   onValue(ref(db,'users'),snap=>{
     _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
     updateStats();renderUsersTable();updateLucros()
+    
+    const onlineNow = _cachedUsers.filter(u=>u.isOnline===true).length
+    const onlineEl = document.getElementById('online-now')
+    if(onlineEl) onlineEl.textContent = onlineNow
+    
+    if(document.getElementById('tab-usuarios')?.classList.contains('active')){
+      renderOnlineUsers(_cachedUsers.filter(u=>u.isOnline===true))
+    }
   })
   onValue(ref(db,'videos'),snap=>{
     _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
@@ -2627,8 +2659,142 @@ async function blockUser(uid){
   try{
     await update(ref(db,'users/'+uid),{ status:'inativo' })
     showToast('Usuário bloqueado!','success')
+    aiNotifyAdmin('🚫 Usuário bloqueado automaticamente pela IA', 'security')
     runAICheck()
   }catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+let _aiMonitoringInterval = null
+let _blockedTodayCount = 0
+
+async function aiNotifyAdmin(msg, type = 'action'){
+  const panel = document.getElementById('ai-alerts-panel')
+  if(!panel) return
+  const time = new Date().toLocaleTimeString('pt-BR')
+  const alertHtml = `<div style="padding:8px 12px;background:${type === 'security' ? '#1c0000' : '#0d1117'};border-left:3px solid ${type === 'security' ? '#f87171' : '#fbbf24'};margin-bottom:8px;border-radius:4px">
+    <div style="font-size:11px;color:#6b7280">${time}</div>
+    <div style="font-size:12px;color:${type === 'security' ? '#f87171' : '#fbbf24'}">${msg}</div>
+  </div>`
+  panel.innerHTML = alertHtml + panel.innerHTML
+  await push(ref(db, 'ia_logs'), { msg, type, timestamp: serverTimestamp() })
+}
+
+async function startAIMonitoring(){
+  if(_aiMonitoringInterval) return
+  
+  document.getElementById('ai-status').innerHTML = '🔴 IA Ativa - Monitorando...'
+  document.getElementById('ai-status').style.color = '#34d399'
+  _blockedTodayCount = 0
+  
+  await aiNotifyAdmin('🤖 Monitoramento IA iniciado. Analisando usuários...', 'action')
+  
+  _aiMonitoringInterval = setInterval(async () => {
+    await runAIMonitorCycle()
+  }, 5000)
+  
+  await runAIMonitorCycle()
+}
+
+function stopAIMonitoring(){
+  if(_aiMonitoringInterval){
+    clearInterval(_aiMonitoringInterval)
+    _aiMonitoringInterval = null
+  }
+  document.getElementById('ai-status').innerHTML = '⏹ IA Inativa'
+  document.getElementById('ai-status').style.color = '#6b7280'
+  aiNotifyAdmin('⏹ Monitoramento IA parado', 'action')
+}
+
+async function runAIMonitorCycle(){
+  try{
+    const usersSnap = await get(ref(db, 'users'))
+    const devicesSnap = await get(ref(db, 'devices'))
+    const withdrawalsSnap = await get(ref(db, 'withdrawals'))
+    
+    if(!usersSnap.exists()) return
+    
+    const users = Object.entries(usersSnap.val()).map(([uid,u])=>({...u,uid}))
+    const devices = devicesSnap.exists() ? devicesSnap.val() : {}
+    const withdrawals = withdrawalsSnap.exists() ? Object.values(withdrawalsSnap.val()) : []
+    
+    const now = Date.now()
+    const dayMs = 24*60*60*1000
+    const hourMs = 60*60*1000
+    
+    let onlineUsers = []
+    let suspiciousUsers = []
+    
+    for(const u of users){
+      if(u.status !== 'ativo') continue
+      
+      const isOnline = u.isOnline === true
+      const devList = devices[u.uid] ? Object.keys(devices[u.uid]) : []
+      const videosWatched = u.videosWatched || 0
+      const balance = Number(u.balance||0)
+      const joinedDays = Math.max(1, Math.floor((now - u.createdAt) / dayMs))
+      const vidsPerDay = videosWatched / joinedDays
+      const userWithdrawals = withdrawals.filter(w=>w.uid===u.uid && w.status==='approved')
+      
+      const issues = []
+      
+      if(isOnline) onlineUsers.push(u)
+      
+      if(devList.length > 2) issues.push('Múltiplos dispositivos ('+devList.length+')')
+      if(vidsPerDay > 100) issues.push('Vídeos anormais ('+vidsPerDay.toFixed(0)+'/dia)')
+      if(balance > 50 && userWithdrawals.length === 0 && videosWatched > 50) issues.push('Saldo alto sem saques')
+      if(u.checkInStreak > 30 && videosWatched < 10) issues.push('Streak sem vídeos')
+      
+      if(issues.length > 0){
+        suspiciousUsers.push({user: u, issues})
+        
+        for(const issue of issues){
+          await aiNotifyAdmin(`⚠️ ${u.fullname||u.display}: ${issue}`, 'security')
+        }
+        
+        if(issues.length >= 2){
+          await blockUser(u.uid)
+          _blockedTodayCount++
+        }
+      }
+    }
+    
+    document.getElementById('online-now').textContent = onlineUsers.length
+    document.getElementById('suspicious-count').textContent = suspiciousUsers.length
+    document.getElementById('total-users').textContent = users.filter(u=>u.status==='ativo').length
+    document.getElementById('blocked-today').textContent = _blockedTodayCount
+    
+    renderOnlineUsers(onlineUsers)
+    
+  } catch(err){
+    console.error('AI Monitor error:', err)
+  }
+}
+
+function renderOnlineUsers(onlineUsers){
+  const list = document.getElementById('online-users-list')
+  if(!list) return
+  
+  if(onlineUsers.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Nenhum usuário online no momento</div>'
+    return
+  }
+  
+  list.innerHTML = onlineUsers.map(u => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#0d1117;border:1px solid #1f2937;border-radius:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">${(u.display||u.fullname||'U')[0].toUpperCase()}</div>
+        <div>
+          <div style="font-weight:600;color:#fff;font-size:13px">${u.fullname||u.display}</div>
+          <div style="font-size:11px;color:#6b7280">${u.email}</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:#a78bfa">🎬 ${u.videosWatched||0} vídeos</div>
+        <div style="font-size:12px;color:#34d399">💰 R$ ${Number(u.balance||0).toFixed(2)}</div>
+        <div style="font-size:10px;color:#34d399">🟢 Online</div>
+      </div>
+    </div>
+  `).join('')
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2831,6 +2997,8 @@ window.toggleMaintenance=toggleMaintenance
 window.fetchYouTubeVideos=fetchYouTubeVideos
 window.showAdAfterVideo=showAdAfterVideo
 window.runAICheck=runAICheck
+window.startAIMonitoring=startAIMonitoring
+window.stopAIMonitoring=stopAIMonitoring
 window.blockUser=blockUser
 window.toggleSupport=toggleSupport
 window.saveSupport=saveSupport
