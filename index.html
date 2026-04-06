@@ -582,47 +582,8 @@ if('serviceWorker' in navigator){
         </div>
       </div>
 
-      <!-- MONITORAMENTO EM TEMPO REAL -->
+      <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
       <div id="tab-usuarios" class="tab-panel">
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">🔴 Monitoramento em Tempo Real</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-          <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px;font-weight:700;color:#34d399" id="online-now">0</div>
-            <div style="font-size:11px;color:#6b7280">Online Agora</div>
-          </div>
-          <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px;font-weight:700;color:#f87171" id="suspicious-count">0</div>
-            <div style="font-size:11px;color:#6b7280">Suspeitos</div>
-          </div>
-          <div style="background:#0c1f4a;border:1px solid #1e3a8a;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px;font-weight:700;color:#60a5fa" id="total-users">0</div>
-            <div style="font-size:11px;color:#6b7280">Total Usuários</div>
-          </div>
-          <div style="background:#1c0000;border:1px solid #7f1d1d;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px;font-weight:700;color:#fbbf24" id="blocked-today">0</div>
-            <div style="font-size:11px;color:#6b7280">Bloqueados Hoje</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <button onclick="startAIMonitoring()" style="padding:8px 16px;background:#dc2626;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">🔴 Iniciar Monitoramento IA</button>
-          <button onclick="stopAIMonitoring()" style="padding:8px 16px;background:#374151;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">⏹ Parar</button>
-          <span id="ai-status" style="font-size:12px;color:#6b7280;margin-left:auto">IA Inativa</span>
-        </div>
-        <div style="background:#0d1117;border:1px solid #1f2937;border-radius:10px;padding:12px;max-height:200px;overflow-y:auto" id="ai-alerts-panel">
-          <div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Aguardando início do monitoramento...</div>
-        </div>
-      </div>
-      
-      <!-- USUÁRIOS ONLINE EM TEMPO REAL -->
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">👥 Usuários Online Agora</div>
-        <div id="online-users-list" style="display:flex;flex-direction:column;gap:8px">
-          <div style="text-align:center;color:#6b7280;font-size:12px;padding:20px">Nenhum usuário online no momento</div>
-        </div>
-      </div>
-      
-      <!-- GERENCIAMENTO DE USUÁRIOS -->
       <div class="panel-card">
         <div class="panel-title">Gerenciamento de Usuários</div>
         <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
