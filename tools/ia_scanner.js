@@ -55,6 +55,11 @@ function main() {
         console.log(`Applying fixes to ${f}`);
         fixFile(f);
       }
+      else {
+        // If not fixing automatically, exit with non-zero to signal CI failures.
+        console.error('Scanner found issues. Rerun with --fix to apply fixes automatically.');
+        process.exitCode = 1;
+      }
     } else {
       console.log(`${f}: OK`);
     }

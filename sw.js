@@ -7,15 +7,10 @@ self.__cinecash_sw_options__ = {
 // Try to import the remote script but fail gracefully so the service worker
 // registration/installation doesn't completely break if the network request fails.
 try {
-  // Prefer local vendored copy to avoid executing remote code directly.
-  importScripts('/vendor/service-worker.min.js');
+  // Do not import remote scripts automatically. If you have a vetted local copy,
+  // update this path to a local asset like `/static/service-worker.min.js`.
+  // importScripts('/static/service-worker.min.js');
+  // For now, avoid executing unknown remote code.
 } catch (err) {
-  // Keep a clear error message in the console for debugging
-  console.error('[sw] Failed to import remote service worker script:', err);
-
-  // Minimal fallback: add a no-op fetch handler so the SW doesn't crash
-  // and requests continue to the network as usual.
-  self.addEventListener('fetch', function noopFetchHandler(event) {
-    // Intentionally empty: allow network to handle requests.
-  });
+  console.error('[sw] unexpected error in service worker:', err);
 }
