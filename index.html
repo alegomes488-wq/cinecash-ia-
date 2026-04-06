@@ -1631,7 +1631,8 @@ async function loadUserDashboard(){
 
   updateCheckInBtn(u)
   updateRewardButtons(totalVids, u.claimedRewards||{})
-  fetchYouTubeVideos() // auto-fetch videos daily
+  fetchYouTubeVideos() // fetch from random category
+  fetchAllCategoriesVideos() // fetch from ALL categories for massive pool
   loadUserVideos()
   loadWithdrawalsConfig()
   loadUserWithdrawals()
@@ -2080,8 +2081,8 @@ async function fetchYouTubeVideos(){
       await remove(ref(db,'videos/'+id))
     }
 
-    // Add new videos (unlimited for now to attract users)
-    for(const v of validVideos.slice(0,20)){
+    // Add new videos (massive pool for unlimited content)
+    for(const v of validVideos.slice(0,50)){
       const newRef = push(ref(db,'videos'))
       await set(newRef,{
         title: v.snippet.title.substring(0,80),
@@ -2095,9 +2096,71 @@ async function fetchYouTubeVideos(){
     }
 
     localStorage.setItem('_yt_last_fetch', String(now))
-    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
   } catch(e){
     console.warn('YouTube fetch error:', e)
+  }
+}
+
+// Fetch from ALL categories to get more videos
+async function fetchAllCategoriesVideos(){
+  const lastFetch = localStorage.getItem('_yt_all_last_fetch')
+  const now = Date.now()
+  // Fetch from all categories every 3 hours
+  if(lastFetch && now - Number(lastFetch) < 3*60*60*1000) return
+
+  try {
+    const existingSnap = await get(ref(db,'videos'))
+    const existing = existingSnap.exists() ? existingSnap.val() : {}
+    const existingIds = Object.keys(existing)
+    
+    // Remove old auto-fetched videos to refresh
+    const toDelete = Object.entries(existing)
+      .filter(([,v])=>v.autoFetched)
+      .map(([id])=>id)
+    for(const id of toDelete){
+      await remove(ref(db,'videos/'+id))
+    }
+    
+    // Fetch from all categories
+    for(const cat of YT_CATEGORIES){
+      const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=15&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
+      
+      const res = await fetch(url)
+      const data = await res.json()
+      if(!data.items || !data.items.length) continue
+      
+      const ids = data.items.map(i=>i.id.videoId).join(',')
+      const detailUrl = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id='+ids+'&key='+YT_API_KEY
+      const detailRes = await fetch(detailUrl)
+      const detailData = await detailRes.json()
+      
+      const validVideos = (detailData.items||[]).filter(v=>{
+        const dur = v.contentDetails?.duration || ''
+        const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+        if(!match) return false
+        const hours = Number(match[1]||0)
+        const mins  = Number(match[2]||0)
+        if(hours > 0 || mins > 30 || mins < 1) return false
+        return true
+      })
+      
+      for(const v of validVideos.slice(0,15)){
+        const newRef = push(ref(db,'videos'))
+        await set(newRef,{
+          title: v.snippet.title.substring(0,80),
+          url: 'https://www.youtube.com/watch?v='+v.id,
+          thumbnail: v.snippet.thumbnails?.medium?.url || '',
+          category: cat.label,
+          reward: DEFAULT_REWARD,
+          createdAt: Date.now(),
+          autoFetched: true
+        })
+      }
+    }
+    
+    localStorage.setItem('_yt_all_last_fetch', String(now))
+  } catch(e){
+    console.warn('All categories fetch error:', e)
   }
 }
 
