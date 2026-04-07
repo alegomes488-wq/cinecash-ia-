@@ -1676,25 +1676,6 @@ onAuthStateChanged(auth, async user => {
     _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
     showPage('dashboard')
     loadUserDashboard()
-      return
-    }
-    
-    const profile = snap.val()
-    if(profile.status === 'inativo'){
-      showToast('Esta conta foi suspensa por violação de termos.','error')
-      await signOut(auth); return
-    }
-    
-    // Log de conexão
-    push(ref(db, 'ia_logs'), {
-      msg: `🟢 Usuário ${profile.fullname || profile.display || 'Usuário'} conectou-se ao sistema.`,
-      type: 'presence',
-      timestamp: serverTimestamp()
-    });
-
-    _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
-    showPage('dashboard')
-    loadUserDashboard()
   } else {
     _currentUser = null
     showSpace('user')
