@@ -3189,10 +3189,29 @@ function showAdminLogin(){
 window.showAdminLogin = showAdminLogin
 
 let _secretTaps = 0
+let _secretTapsTimer = null
+
 async function secretAdminTap(){
+  // Reseta contador se passar mais de 1.5 segundos entre cliques
+  if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
+  _secretTapsTimer = setTimeout(() => { _secretTaps = 0 }, 1500)
+  
   _secretTaps++
+  
+  // Feedback visual - mostra quantos cliques já foram dados
+  const logo = document.querySelector('.auth-logo')
+  if(logo){
+    logo.style.transform = 'scale(1.1)'
+    logo.style.transition = 'transform 0.1s'
+    setTimeout(() => { logo.style.transform = 'scale(1)' }, 100)
+  }
+  
+  // Mostra contador de cliques (aparece brevemente)
+  showToast(`🔐 ${_secretTaps}/3 cliques`, 'info')
+  
   if(_secretTaps >= 3){
     _secretTaps = 0
+    if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
     const pwd = prompt('Acesso bloqueado. Digite a senha master:')
     if(pwd !== 'admin16') {
       return showToast('Senha incorreta! Acesso negado.', 'error')
