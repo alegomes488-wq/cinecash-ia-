@@ -1206,26 +1206,29 @@ function attachRealtimeListeners(){
   // VERY aggressive polling every 1 second for real-time updates
   _adminRefreshInterval = setInterval(async () => {
     try {
+      // Force reload from server (bypass cache)
       const snap = await get(ref(db,'users'))
       if(snap.exists()){
         const newUsers = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
         
+        // Compare with cached users
+        const prevOnline = (_cachedUsers || []).filter(u=>u.isOnline===true).length
+        const currOnline = newUsers.filter(u=>u.isOnline===true).length
+        
         // Check if any new users came online
-        const newOnline = newUsers.filter(u=>u.isOnline===true && !_cachedUsers.find(c=>c.uid===u.uid&&c.isOnline===true))
-        if(newOnline.length > 0){
-          showToast(`🟢 ${newOnline.length} usuário(s) online agora!`, 'info')
-          // Play notification sound
-          try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQYAKI/R6bJtBQAahtH6z3cLABOB0vjLcyUBDH/L+stzJQ==')
-            audio.volume = 0.3
-            audio.play().catch(()=>{})
-          } catch(e) {}
+        const newOnline = newUsers.filter(u=>u.isOnline===true && !(_cachedUsers || []).find(c=>c.uid===u.uid&&c.isOnline===true))
+        
+        if(newOnline.length > 0 || prevOnline !== currOnline){
+          showToast(`🟢 ${currOnline} usuário(s) online agora!`, 'info')
         }
         
         _cachedUsers = newUsers
-        updateStats();renderUsersTable()
+        updateStats()
+        renderUsersTable()
       }
-    } catch(e) {}
+    } catch(e) {
+      console.error('Polling error:', e)
+    }
   }, 1000)
   
   onValue(ref(db,'videos'),snap=>{
@@ -1612,9 +1615,24 @@ onAuthStateChanged(auth, async user => {
     // ── Carrega Perfil do Usuário ───────────────────────────────────────────
     const snap = await get(ref(db, 'users/'+user.uid))
     
-    // Define online IMMEDIATAMENTE para TODOS os usuários (antes de verificar perfil)
+    // Define online IMMEDIATAMENTE para TODOS os usuários
     const userStatusRef = ref(db, 'users/' + user.uid);
-    await update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
+    
+    // USA set() EM VEZ DE update() - set() cria OU sobrescreve
+    await set(userStatusRef, { 
+      isOnline: true, 
+      lastSeen: serverTimestamp(),
+      uid: user.uid,
+      email: user.email || snap.val()?.email || '',
+      fullname: user.displayName || snap.val()?.fullname || snap.val()?.display || 'Usuário',
+      display: snap.val()?.display || (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
+      balance: snap.val()?.balance || 0,
+      videosWatched: snap.val()?.videosWatched || 0,
+      status: snap.val()?.status || 'ativo',
+      createdAt: snap.val()?.createdAt || Date.now(),
+      checkInStreak: snap.val()?.checkInStreak || 0,
+      totalEarned: snap.val()?.totalEarned || 0
+    });
     
     // Also set up disconnect handler for when they close browser
     const connectedRef = ref(db, '.info/connected');
@@ -1622,35 +1640,42 @@ onAuthStateChanged(auth, async user => {
       if (snap.val() === true) {
         const disconnectRef = onDisconnect(userStatusRef);
         disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
-        update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
       }
     });
     
     if(!snap.exists()){
-      // Usuário não tem perfil - cria um básico
-      await set(ref(db, 'users/' + user.uid), {
-        fullname: user.displayName || 'Usuário',
-        email: user.email || '',
-        display: (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
-        createdAt: Date.now(),
-        status: 'ativo',
-        balance: 0,
-        videosWatched: 0,
-        checkInStreak: 0,
-        totalEarned: 0,
-        isOnline: true
-      });
-      
       // Log de novo usuário
       push(ref(db, 'ia_logs'), {
         msg: `🟢 Novo usuário ${user.displayName || 'Usuário'} fez login pela primeira vez.`,
         type: 'presence',
         timestamp: serverTimestamp()
       });
-      
-      _currentUser = { uid: user.uid, isAdmin: false, isTestUser: isTestUser, fullname: user.displayName || 'Usuário' }
-      showPage('dashboard')
-      loadUserDashboard()
+    }
+    
+    // Log de conexão
+    push(ref(db, 'ia_logs'), {
+      msg: `🟢 Usuário ${user.displayName || snap.val()?.fullname || 'Usuário'} conectou-se.`,
+      type: 'presence',
+      timestamp: serverTimestamp()
+    });
+
+    const profile = snap.exists() ? snap.val() : { 
+      fullname: user.displayName || 'Usuário',
+      display: (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
+      email: user.email || '',
+      balance: 0,
+      videosWatched: 0,
+      status: 'ativo'
+    }
+    
+    if(profile.status === 'inativo'){
+      showToast('Esta conta foi suspensa por violação de termos.','error')
+      await signOut(auth); return
+    }
+
+    _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
+    showPage('dashboard')
+    loadUserDashboard()
       return
     }
     
