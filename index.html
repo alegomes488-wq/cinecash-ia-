@@ -1146,6 +1146,9 @@ async function _handleGoogleUser(user) {
   } else {
     showToast('Login com Google realizado! ✅','success')
   }
+  
+  // Ensure isOnline is set for existing users too
+  await set(ref(db,'users/'+user.uid+'/isOnline'), true)
 }
 
 // Captura resultado do redirect do Google ao retornar para a página
@@ -1173,7 +1176,8 @@ async function loadAdminUsers(){
     const snap = await get(ref(db,'users'))
     if(snap.exists()){
       _cachedUsers = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
-      updateStats();renderUsersTable()
+      updateStats()
+      renderUsersTable()
     }
   } catch(e) {
     console.error('Error loading admin users:', e)
@@ -1184,18 +1188,19 @@ function attachRealtimeListeners(){
   // Cancel any existing polling interval
   if(_adminRefreshInterval) clearInterval(_adminRefreshInterval)
   
-  // Firebase real-time listener for users
+  // Firebase real-time listener for users - fires IMMEDIATELY when data changes
   onValue(ref(db,'users'),snap=>{
+    const prevOnline = (_cachedUsers || []).filter(u=>u.isOnline===true).length
     _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
     updateStats();renderUsersTable();updateLucros()
-    // Check for newly online users
-    const onlineUsers = _cachedUsers.filter(u=>u.isOnline===true)
-    if(onlineUsers.length > 0){
-      // Show notification in logs
-      const iaTerminal = document.getElementById('ia-terminal')
-      if(iaTerminal){
-        const latestOnline = onlineUsers.map(u=>u.fullname||u.display).join(', ')
-        // Just update the table silently
+    
+    // Check for newly online users and show toast
+    const currOnline = _cachedUsers.filter(u=>u.isOnline===true).length
+    if(currOnline > prevOnline){
+      const newOnline = _cachedUsers.filter(u=>u.isOnline===true && !(_cachedUsers||[]).find(c=>c.uid===u.uid&&c.isOnline===true))
+      if(newOnline.length > 0){
+        const names = newOnline.map(u=>u.fullname||u.display||u.email).join(', ')
+        showToast(`🟢 ${names} entrou!`, 'success')
       }
     }
   })
@@ -1319,14 +1324,14 @@ function renderUsersTable(){
   const tbody=document.getElementById('users-tbody')
   if(!tbody)return
   if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>';document.getElementById('users-footer').textContent='Nenhum usuário encontrado';return}
-  tbody.innerHTML=users.map(u=>`<tr>
+  tbody.innerHTML=users.map(u=>`<tr style="${u.isOnline?'background:rgba(52,211,153,0.08)':''}">
     <td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td>
     <td>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:8px;height:8px;border-radius:50%;background:${u.isOnline?'#34d399':'#4b5563'};box-shadow:${u.isOnline?'0 0 8px #34d399':''}"></div>
         <div class="user-names">
-          <div class="name">${u.fullname||'-'}</div>
-          <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'Offline')}</div>
+          <div class="name" style="${u.isOnline?'color:#34d399;font-weight:700':''}">${u.fullname||u.display||u.email||'-'}</div>
+          <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'🟢 Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'⚫ Offline')}</div>
         </div>
       </div>
     </td>
