@@ -1,0 +1,27 @@
+name: SW Integration Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sw-test:
+    runs-on: ubuntu-latest
+    services:
+      xvfb:
+        image: selenium/standalone-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: |
+          npm ci || true
+      - name: Install Playwright
+        run: |
+          npm i -D playwright@1.35.0
+      - name: Run SW integration test (headless)
+        run: |
+          node -e "console.log('No integration tests defined yet; add tests/playwright')"

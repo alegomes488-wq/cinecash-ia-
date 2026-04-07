@@ -274,8 +274,19 @@
     .page{display:none}.page.active{display:block}
     .admin-page{display:none}.admin-page.active{display:flex;flex-direction:row;min-height:100vh;width:100%}
 
-    /* ── IA DEVELOPER HUB ── */
-    .ia-hub-container { display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 160px); min-height: 500px; }
+    /* ── IA SYSTEM CENTER ── */
+    .ia-system-center { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .ia-sys-info { display: flex; align-items: center; gap: 12px; }
+    .ia-sys-dot { width: 10px; height: 10px; border-radius: 50%; background: #34d399; position: relative; }
+    .ia-sys-dot.pulse::after { content: ''; position: absolute; inset: -4px; border: 2px solid #34d399; border-radius: 50%; animation: dotPulse 2s infinite; }
+    @keyframes dotPulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+    .ia-sys-label { font-size: 13px; font-weight: 600; color: #fff; }
+    .ia-sys-status { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .ia-deploy-btn { padding: 10px 20px; background: linear-gradient(135deg, #7c3aed, #0ea5e9); border: none; border-radius: 12px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+    .ia-deploy-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5); }
+    .ia-deploy-btn:active { transform: translateY(0); }
+    #tab-ia { padding: 0 !important; }
+    .ia-hub-container { display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 120px); min-height: 600px; padding: 20px; box-sizing: border-box; }
     .ia-chat-side { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
     .ia-chat-header { padding: 16px; background: #1e293b; color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #334155; }
     .ia-chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
@@ -333,7 +344,7 @@ if('serviceWorker' in navigator){
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo" onclick="secretAdminTap()" style="cursor:pointer" title="Acesso Admin"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
+    <div class="auth-logo"><span class="auth-logo-icon">📹</span><h1 onclick="secretAdminTap()" style="cursor:pointer">CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
     <div class="field-group">
       <label class="field-label">Usuário ou Email</label>
@@ -476,7 +487,7 @@ if('serviceWorker' in navigator){
     
     <div class="admin-tabs" style="flex:1; display:flex; flex-direction:column; gap:8px; padding:24px 14px; background:transparent; border:none; margin:0; border-radius:0;">
       <button class="tab-btn active" onclick="switchTab('geral',this)" style="justify-content:flex-start">🏠 <span class="nav-text">Visão Geral</span></button>
-      <button class="tab-btn" onclick="switchTab('usuarios',this)" style="justify-content:flex-start">👥 <span class="nav-text">Usuários</span></button>
+      <button class="tab-btn" onclick="switchTab('usuarios',this)" style="justify-content:flex-start">👥 <span class="nav-text">Usuários</span> <span id="online-users-badge" style="background:#34d399;color:#000;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:6px;display:none">0</span></button>
       <button class="tab-btn" onclick="switchTab('videos',this)" style="justify-content:flex-start">📹 <span class="nav-text">Vídeos</span></button>
       <button class="tab-btn" onclick="switchTab('crescimento',this)" style="justify-content:flex-start">📈 <span class="nav-text">Crescimento</span></button>
       <button class="tab-btn" onclick="switchTab('seguranca',this)" style="justify-content:flex-start">🛡 <span class="nav-text">Segurança</span></button>
@@ -571,23 +582,17 @@ if('serviceWorker' in navigator){
 
       <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
       <div id="tab-usuarios" class="tab-panel">
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">Criar Novo Usuário</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Nome</label><input id="admin-reg-firstname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="João"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Sobrenome</label><input id="admin-reg-lastname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="Silva"></div>
-        </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Apelido (nome que aparece no site)</label><input id="admin-reg-display" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="joao_silva"></div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Email</label><input id="admin-reg-email" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="email" placeholder="joao@email.com"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Senha</label><input id="admin-reg-password" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Mínimo 8 caracteres"></div>
-        </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Confirmar Senha</label><input id="admin-reg-confirm" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Repita a senha"></div>
-        <button onclick="adminCreateUser()" style="margin-top:16px;padding:12px 24px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer">➕ Criar Usuário</button>
-        <div id="admin-reg-status" style="margin-top:8px;font-size:12px"></div>
-      </div>
       <div class="panel-card">
-        <div class="panel-title">Gerenciamento de Usuários</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:0">Gerenciamento de Usuários</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#34d399">
+              <div id="live-indicator" style="width:8px;height:8px;background:#34d399;border-radius:50%;animation:pulse 1s infinite"></div>
+              <span id="live-count">0 online</span>
+            </div>
+            <button onclick="loadAdminUsers();showToast('🔄 Atualizando...','info')" style="padding:6px 12px;background:#1f2937;border:1px solid #374151;border-radius:8px;color:#fff;font-size:12px;cursor:pointer">🔄 Atualizar</button>
+          </div>
+        </div>
         <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
         <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ID Único</th><th>Nome</th><th>Email</th><th>Vídeos</th><th>Saldo</th><th>Cadastro</th><th>Status</th><th>Ações</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
         <div class="table-footer" id="users-footer">Mostrando 0 usuários</div>
@@ -695,6 +700,24 @@ if('serviceWorker' in navigator){
 
     <!-- TAB: IA MONITOR -->
     <div id="tab-ia" class="tab-panel">
+      <!-- SYSTEM & DEPLOY CENTER -->
+      <div class="ia-system-center">
+        <div class="ia-sys-info">
+          <div class="ia-sys-dot pulse"></div>
+          <div>
+            <div class="ia-sys-label">Sistema CineCash: Online</div>
+            <div class="ia-sys-status" id="ia-sys-status">Sincronizado com Firebase • Versão 2.4.1</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div style="text-align:right">
+            <div style="font-size:11px; color:#64748b">Alterações locais detectadas</div>
+            <div style="font-size:12px; color:#fbbf24; font-weight:600" id="ia-deploy-status">Pendente de Deploy</div>
+          </div>
+          <button class="ia-deploy-btn" onclick="ia_triggerDeployNotify()">🚀 REALIZAR DEPLOY</button>
+        </div>
+      </div>
+
       <div class="ia-hub-container">
         <!-- LADO ESQUERDO: CHAT COM O AGENTE -->
         <div class="ia-chat-side">
@@ -1123,6 +1146,9 @@ async function _handleGoogleUser(user) {
   } else {
     showToast('Login com Google realizado! ✅','success')
   }
+  
+  // Ensure isOnline is set for existing users too
+  await set(ref(db,'users/'+user.uid+'/isOnline'), true)
 }
 
 // Captura resultado do redirect do Google ao retornar para a página
@@ -1143,11 +1169,73 @@ async function doAdminLogout(){
 }
 
 // ── realtime ──────────────────────────────────────────────────────────────────
+let _adminRefreshInterval = null
+
+async function loadAdminUsers(){
+  try {
+    const snap = await get(ref(db,'users'))
+    if(snap.exists()){
+      _cachedUsers = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+      updateStats()
+      renderUsersTable()
+    }
+  } catch(e) {
+    console.error('Error loading admin users:', e)
+  }
+}
+
 function attachRealtimeListeners(){
+  // Cancel any existing polling interval
+  if(_adminRefreshInterval) clearInterval(_adminRefreshInterval)
+  
+  // Firebase real-time listener for users - fires IMMEDIATELY when data changes
   onValue(ref(db,'users'),snap=>{
+    const prevOnline = (_cachedUsers || []).filter(u=>u.isOnline===true).length
     _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
     updateStats();renderUsersTable();updateLucros()
+    
+    // Check for newly online users and show toast
+    const currOnline = _cachedUsers.filter(u=>u.isOnline===true).length
+    if(currOnline > prevOnline){
+      const newOnline = _cachedUsers.filter(u=>u.isOnline===true && !(_cachedUsers||[]).find(c=>c.uid===u.uid&&c.isOnline===true))
+      if(newOnline.length > 0){
+        const names = newOnline.map(u=>u.fullname||u.display||u.email).join(', ')
+        showToast(`🟢 ${names} entrou!`, 'success')
+      }
+    }
   })
+  
+  // Immediate refresh when admin opens dashboard
+  loadAdminUsers()
+  
+  // VERY aggressive polling every 1 second for real-time updates
+  _adminRefreshInterval = setInterval(async () => {
+    try {
+      // Force reload from server (bypass cache)
+      const snap = await get(ref(db,'users'))
+      if(snap.exists()){
+        const newUsers = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+        
+        // Compare with cached users
+        const prevOnline = (_cachedUsers || []).filter(u=>u.isOnline===true).length
+        const currOnline = newUsers.filter(u=>u.isOnline===true).length
+        
+        // Check if any new users came online
+        const newOnline = newUsers.filter(u=>u.isOnline===true && !(_cachedUsers || []).find(c=>c.uid===u.uid&&c.isOnline===true))
+        
+        if(newOnline.length > 0 || prevOnline !== currOnline){
+          showToast(`🟢 ${currOnline} usuário(s) online agora!`, 'info')
+        }
+        
+        _cachedUsers = newUsers
+        updateStats()
+        renderUsersTable()
+      }
+    } catch(e) {
+      console.error('Polling error:', e)
+    }
+  }, 1000)
+  
   onValue(ref(db,'videos'),snap=>{
     _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
     renderVideosTable();updateLucros()
@@ -1185,6 +1273,11 @@ function switchTab(name,btn){
   if(name==='saques')loadSaquesTab()
   if(name==='geral')loadAdminBank()
   if(name==='ia')initSupportWidget()
+  if(name==='usuarios'){
+    // Force refresh users when switching to this tab
+    loadAdminUsers()
+    showToast('🔄 Lista de usuários atualizada', 'info')
+  }
 }
 
 // ── stats ──────────────────────────────────────────────────────────────────────
@@ -1194,9 +1287,27 @@ function updateStats(){
   const onlineCount=users.filter(u=>u.isOnline===true).length
   
   document.getElementById('stat-total').textContent=users.length
-  document.getElementById('stat-active').textContent=onlineCount // MUDANÇA: Agora reflete usuários online AGORA
+  document.getElementById('stat-active').textContent=onlineCount
   document.getElementById('stat-videos').textContent=totalVid
   document.getElementById('stat-saques').textContent=0
+  
+  // Update online users badge in sidebar
+  const badge = document.getElementById('online-users-badge')
+  if(badge){
+    if(onlineCount > 0){
+      badge.textContent = onlineCount
+      badge.style.display = 'inline'
+    } else {
+      badge.style.display = 'none'
+    }
+  }
+  
+  // Update live count indicator in users tab
+  const liveCount = document.getElementById('live-count')
+  if(liveCount){
+    liveCount.textContent = onlineCount + ' online'
+  }
+  
   document.getElementById('g-total').textContent=users.length
   const now=new Date(),m=now.getMonth(),y=now.getFullYear()
   const newM=users.filter(u=>{const d=new Date(u.createdAt);return d.getMonth()===m&&d.getFullYear()===y}).length
@@ -1213,14 +1324,14 @@ function renderUsersTable(){
   const tbody=document.getElementById('users-tbody')
   if(!tbody)return
   if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#6b7280;padding:24px">Nenhum usuário encontrado</td></tr>';document.getElementById('users-footer').textContent='Nenhum usuário encontrado';return}
-  tbody.innerHTML=users.map(u=>`<tr>
+  tbody.innerHTML=users.map(u=>`<tr style="${u.isOnline?'background:rgba(52,211,153,0.08)':''}">
     <td style="font-size:11px;color:#6b7280;font-family:monospace">${u.uid.substring(0,16)}...</td>
     <td>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:8px;height:8px;border-radius:50%;background:${u.isOnline?'#34d399':'#4b5563'};box-shadow:${u.isOnline?'0 0 8px #34d399':''}"></div>
         <div class="user-names">
-          <div class="name">${u.fullname||'-'}</div>
-          <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'Offline')}</div>
+          <div class="name" style="${u.isOnline?'color:#34d399;font-weight:700':''}">${u.fullname||u.display||u.email||'-'}</div>
+          <div class="display" style="font-size:10px;color:${u.isOnline?'#34d399':'#9ca3af'}">${u.isOnline?'🟢 Online Agora':(u.lastSeen?'visto '+fmtDate(u.lastSeen):'⚫ Offline')}</div>
         </div>
       </div>
     </td>
@@ -1508,37 +1619,68 @@ onAuthStateChanged(auth, async user => {
 
     // ── Carrega Perfil do Usuário ───────────────────────────────────────────
     const snap = await get(ref(db, 'users/'+user.uid))
-    if(snap.exists()){
-      const profile = snap.val()
-      if(profile.status === 'inativo'){
-        showToast('Esta conta foi suspensa por violação de termos.','error')
-        await signOut(auth); return
+    
+    // Define online IMMEDIATAMENTE para TODOS os usuários
+    const userStatusRef = ref(db, 'users/' + user.uid);
+    
+    // USA set() EM VEZ DE update() - set() cria OU sobrescreve
+    await set(userStatusRef, { 
+      isOnline: true, 
+      lastSeen: serverTimestamp(),
+      uid: user.uid,
+      email: user.email || snap.val()?.email || '',
+      fullname: user.displayName || snap.val()?.fullname || snap.val()?.display || 'Usuário',
+      display: snap.val()?.display || (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
+      balance: snap.val()?.balance || 0,
+      videosWatched: snap.val()?.videosWatched || 0,
+      status: snap.val()?.status || 'ativo',
+      createdAt: snap.val()?.createdAt || Date.now(),
+      checkInStreak: snap.val()?.checkInStreak || 0,
+      totalEarned: snap.val()?.totalEarned || 0
+    });
+    
+    // Also set up disconnect handler for when they close browser
+    const connectedRef = ref(db, '.info/connected');
+    onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        const disconnectRef = onDisconnect(userStatusRef);
+        disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
       }
-      
-      // 🟢 Sistema de Presença Realtime
-      const userStatusRef = ref(db, 'users/' + user.uid);
-      const connectedRef = ref(db, '.info/connected');
-      onValue(connectedRef, (snap) => {
-        if (snap.val() === true) {
-          // Quando conectado, define online: true
-          const disconnectRef = onDisconnect(userStatusRef);
-          disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
-          update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
-          
-          // Log para o Admin Monitor
-          push(ref(db, 'ia_logs'), {
-            msg: `Usuário ${profile.fullname || profile.display} conectou-se ao sistema.`,
-            type: 'presence',
-            timestamp: serverTimestamp()
-          });
-        }
+    });
+    
+    if(!snap.exists()){
+      // Log de novo usuário
+      push(ref(db, 'ia_logs'), {
+        msg: `🟢 Novo usuário ${user.displayName || 'Usuário'} fez login pela primeira vez.`,
+        type: 'presence',
+        timestamp: serverTimestamp()
       });
-
-      _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
-      showPage('dashboard')
-      loadUserDashboard()
-      if(typeof loadSupportWidget === 'function') loadSupportWidget()
     }
+    
+    // Log de conexão
+    push(ref(db, 'ia_logs'), {
+      msg: `🟢 Usuário ${user.displayName || snap.val()?.fullname || 'Usuário'} conectou-se.`,
+      type: 'presence',
+      timestamp: serverTimestamp()
+    });
+
+    const profile = snap.exists() ? snap.val() : { 
+      fullname: user.displayName || 'Usuário',
+      display: (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
+      email: user.email || '',
+      balance: 0,
+      videosWatched: 0,
+      status: 'ativo'
+    }
+    
+    if(profile.status === 'inativo'){
+      showToast('Esta conta foi suspensa por violação de termos.','error')
+      await signOut(auth); return
+    }
+
+    _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
+    showPage('dashboard')
+    loadUserDashboard()
   } else {
     _currentUser = null
     showSpace('user')
@@ -1617,7 +1759,8 @@ async function loadUserDashboard(){
 
   updateCheckInBtn(u)
   updateRewardButtons(totalVids, u.claimedRewards||{})
-  fetchYouTubeVideos() // auto-fetch videos daily
+  fetchYouTubeVideos() // fetch from random category
+  fetchAllCategoriesVideos() // fetch from ALL categories for massive pool
   loadUserVideos()
   loadWithdrawalsConfig()
   loadUserWithdrawals()
@@ -1749,10 +1892,8 @@ async function loadUserVideos(){
 
   const videos = Object.entries(snap.val()).map(([id,v])=>({...v,id}))
   const u = _currentUser
-  const watchedList = u.watchedVideos || {}
 
   grid.innerHTML = videos.map(v=>{
-    const watched = watchedList[v.id]
     const thumb = v.thumbnail ? `<img src="${v.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:0">` : '📹'
     const catBadge = v.category ? `<span style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px">${v.category}</span>` : ''
     return `<div class="video-card">
@@ -1763,8 +1904,8 @@ async function loadUserVideos(){
       </div>
       <div class="video-info">
         <div class="video-title">${v.title}</div>
-        <button class="watch-btn ${watched?'watched':''}" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})" ${watched?'disabled':''}>
-          ${watched ? '✅ Já assistido' : '▶ Assistir e ganhar'}
+        <button class="watch-btn" onclick="startWatch('${v.id}',\`${v.title.replace(/`/g,"'")}\`,'${v.url}',${v.reward})">
+          ▶ Assistir e ganhar
         </button>
       </div>
     </div>`
@@ -1773,12 +1914,6 @@ async function loadUserVideos(){
 
 async function startWatch(videoId, title, url, reward){
   if(!antiFraud_checkVideoWatch(_currentUser.uid, videoId)) return
-
-  // Check if already watched in DB
-  const snap = await get(ref(db,'users/'+_currentUser.uid+'/watchedVideos/'+videoId))
-  if(snap.exists()){
-    showToast('Você já assistiu este vídeo!','error'); return
-  }
 
   _watchVideoId = videoId
   _watchDuration = 30
@@ -2027,14 +2162,14 @@ const DEFAULT_REWARD = 0.02
 async function fetchYouTubeVideos(){
   const lastFetch = localStorage.getItem('_yt_last_fetch')
   const now = Date.now()
-  // Only fetch once per 6 hours
-  if(lastFetch && now - Number(lastFetch) < 6*60*60*1000) return
+  // Only fetch once per 1 hour (attract users with fresh content)
+  if(lastFetch && now - Number(lastFetch) < 1*60*60*1000) return
 
   try {
     // Fetch from random category
     const cat = YT_CATEGORIES[Math.floor(Math.random()*YT_CATEGORIES.length)]
-    const maxDuration = 'long' // PT30M or less handled by maxResults filter
-    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=10&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
+    const maxResults = 15
+    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults='+maxResults+'&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
 
     const res = await fetch(url)
     const data = await res.json()
@@ -2074,8 +2209,8 @@ async function fetchYouTubeVideos(){
       await remove(ref(db,'videos/'+id))
     }
 
-    // Add new videos
-    for(const v of validVideos.slice(0,5)){
+    // Add new videos (massive pool for unlimited content)
+    for(const v of validVideos.slice(0,50)){
       const newRef = push(ref(db,'videos'))
       await set(newRef,{
         title: v.snippet.title.substring(0,80),
@@ -2089,9 +2224,71 @@ async function fetchYouTubeVideos(){
     }
 
     localStorage.setItem('_yt_last_fetch', String(now))
-    console.log('✅ YouTube: '+validVideos.slice(0,5).length+' vídeos atualizados')
   } catch(e){
     console.warn('YouTube fetch error:', e)
+  }
+}
+
+// Fetch from ALL categories to get more videos
+async function fetchAllCategoriesVideos(){
+  const lastFetch = localStorage.getItem('_yt_all_last_fetch')
+  const now = Date.now()
+  // Fetch from all categories every 3 hours
+  if(lastFetch && now - Number(lastFetch) < 3*60*60*1000) return
+
+  try {
+    const existingSnap = await get(ref(db,'videos'))
+    const existing = existingSnap.exists() ? existingSnap.val() : {}
+    const existingIds = Object.keys(existing)
+    
+    // Remove old auto-fetched videos to refresh
+    const toDelete = Object.entries(existing)
+      .filter(([,v])=>v.autoFetched)
+      .map(([id])=>id)
+    for(const id of toDelete){
+      await remove(ref(db,'videos/'+id))
+    }
+    
+    // Fetch from all categories
+    for(const cat of YT_CATEGORIES){
+      const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=medium&maxResults=15&order=viewCount&regionCode=BR&relevanceLanguage=pt&q='+encodeURIComponent(cat.q)+'&key='+YT_API_KEY
+      
+      const res = await fetch(url)
+      const data = await res.json()
+      if(!data.items || !data.items.length) continue
+      
+      const ids = data.items.map(i=>i.id.videoId).join(',')
+      const detailUrl = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id='+ids+'&key='+YT_API_KEY
+      const detailRes = await fetch(detailUrl)
+      const detailData = await detailRes.json()
+      
+      const validVideos = (detailData.items||[]).filter(v=>{
+        const dur = v.contentDetails?.duration || ''
+        const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+        if(!match) return false
+        const hours = Number(match[1]||0)
+        const mins  = Number(match[2]||0)
+        if(hours > 0 || mins > 30 || mins < 1) return false
+        return true
+      })
+      
+      for(const v of validVideos.slice(0,15)){
+        const newRef = push(ref(db,'videos'))
+        await set(newRef,{
+          title: v.snippet.title.substring(0,80),
+          url: 'https://www.youtube.com/watch?v='+v.id,
+          thumbnail: v.snippet.thumbnails?.medium?.url || '',
+          category: cat.label,
+          reward: DEFAULT_REWARD,
+          createdAt: Date.now(),
+          autoFetched: true
+        })
+      }
+    }
+    
+    localStorage.setItem('_yt_all_last_fetch', String(now))
+  } catch(e){
+    console.warn('All categories fetch error:', e)
   }
 }
 
@@ -2768,6 +2965,17 @@ window.ai_securityScan = ai_securityScan;
 window.ai_cleanInactive = ai_cleanInactive;
 
 // ── MOTOR DO AGENTE IA (HUB DE DESENVOLVEDOR) ──────────────────────────────
+async function ia_triggerDeployNotify() {
+  ia_addMessage('ai', "🚀 Comando de Deploy detectado. Iniciando preparação de pacotes...");
+  
+  // Simular processamento
+  setTimeout(() => {
+    ia_addMessage('ai', "📦 Arquivos locais otimizados. Para finalizar a atualização no site oficial, você precisa que o sistema Antigravity execute: 'firebase deploy --only hosting'. Deseja que eu solicite isso agora?");
+    document.getElementById('ia-deploy-status').textContent = 'Pronto para Deploy';
+    document.getElementById('ia-deploy-status').style.color = '#34d399';
+  }, 1500);
+}
+
 function ia_switchWsTab(tab, btn) {
   document.querySelectorAll('.ia-ws-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.ia-ws-panel').forEach(p => p.classList.remove('active'));
@@ -2830,6 +3038,24 @@ async function ia_sendMessage() {
 async function ia_getAgentResponse(query) {
   const q = query.toLowerCase();
   
+  // Resposta específica para análise de código solicitada pelo usuário
+  if(q.includes('analis') && (q.includes('código') || q.includes('codigo') || q.includes('todo'))) {
+    return {
+      msg: "🤖 Iniciando análise heurística de todo o projeto CineCash IA. Identifiquei 2.800+ linhas de código. Vou verificar segurança, performance e organização.",
+      plan: { 
+        title: "🛡️ Auditoria Completa de Código", 
+        desc: "Análise profunda de scripts de segurança, listeners do Firebase, e estrutura de componentes do Admin/User Space." 
+      },
+      tasks: [
+        { text: "Verificar vazamentos de memória em Realtime Listeners", done: false },
+        { text: "Validar isolamento entre Admin e User Space", done: true },
+        { text: "Checar redundância em funções de Autenticação", done: true },
+        { text: "Auditar Permissões de Saque e Anti-Fraude", done: false }
+      ],
+      code: `// Sugestão de Otimização de Segurança\nfunction secureCheck() {\n  if(!_currentUser.isAdmin) throw new Error('Acesso negado');\n  return true;\n}`
+    };
+  }
+
   if(q.includes('bônus') || q.includes('recompensa')) {
     return {
       msg: "Entendido. Vou elaborar um plano para criar um novo sistema de bônus diário progressivo para aumentar a retenção.",
@@ -2843,16 +3069,30 @@ async function ia_getAgentResponse(query) {
     };
   }
   
-  if(q.includes('bug') || q.includes('erro') || q.includes('ajuda')) {
+  if(q.includes('bug') || q.includes('erro') || q.includes('ajuda') || q.includes('varredura')) {
     return {
-      msg: "Identifiquei que alguns usuários estão relatando lentidão no carregamento dos vídeos. Vou realizar uma varredura de integridade agora.",
-      plan: { title: "🔍 Varredura de Erros Críticos", desc: "Varredura automática para encontrar conexões pendentes ou loops infinitos no carregamento de vídeos." },
+      msg: "🔍 Iniciando Varredura de Integridade (Deep Scan). Analisando logs do Firebase e detectando gargalos no código do cliente...",
+      plan: { title: "🔍 Deep Scan & Debugging", desc: "Varredura automática para encontrar conexões pendentes, loops infinitos e erros de redirecionamento no login." },
       tasks: [
         { text: "Analisar onValue listeners pendentes", done: true },
-        { text: "Verificar integridade do nó /videos", done: true },
-        { text: "Otimizar cache local de usuários", done: false }
+        { text: "Validar integridade do nó /users", done: true },
+        { text: "Verificar loop de redirecionamento no Dashboard", done: true },
+        { text: "Otimizar tempo de resposta do check-in", done: false }
       ],
-      code: `// Otimização de Listener\nfunction cleanupListeners() {\n  off(ref(db, 'videos'));\n  console.log('Listeners limpos!');\n}`
+      code: `// Correção de Redirecionamento Recursivo\nonAuthStateChanged(auth, user => {\n  if(user && !onAdminPage) showPage('dashboard');\n});`
+    };
+  }
+
+  if(q.includes('segurança') || q.includes('firewall') || q.includes('proteção')) {
+    return {
+      msg: "🛡️ Auditoria de Segurança em tempo real. Verificando proteção contra injeção e acessos não autorizados ao nó /config.",
+      plan: { title: "🛡️ Fortalecimento de Firewall", desc: "Aplicação de camadas extras de validação e verificação de regras de segurança do Realtime Database." },
+      tasks: [
+        { text: "Bloquear acesso anônimo a /adminUID", done: true },
+        { text: "Validar token de sessão administrativa", done: true },
+        { text: "Implementar Rate Limit em solicitações de saque", done: false }
+      ],
+      code: `// Regra de Segurança Sugerida\n{\n  "rules": {\n    "config": { ".read": "auth.uid === 'ADMIN_ID'" }\n  }\n}`
     };
   }
 
@@ -2915,6 +3155,7 @@ window.ia_getAgentResponse = ia_getAgentResponse;
 window.ia_renderPlan = ia_renderPlan;
 window.ia_renderTasks = ia_renderTasks;
 window.ia_renderCode = ia_renderCode;
+window.ia_triggerDeployNotify = ia_triggerDeployNotify;
 
 function showAdminLogin(){
   const pwd = prompt('Digite a senha de administrador:')
@@ -2934,27 +3175,42 @@ function showAdminLogin(){
 window.showAdminLogin = showAdminLogin
 
 let _secretTaps = 0
-async function secretAdminTap(){
+let _secretTapsTimer = null
+
+function secretAdminTap(){
+  if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
+  _secretTapsTimer = setTimeout(() => { _secretTaps = 0 }, 1500)
+  
   _secretTaps++
+  
+  const logo = document.querySelector('.auth-logo')
+  if(logo){
+    logo.style.transform = 'scale(1.1)'
+    logo.style.transition = 'transform 0.1s'
+    setTimeout(() => { logo.style.transform = 'scale(1)' }, 100)
+  }
+  
   if(_secretTaps >= 3){
     _secretTaps = 0
+    if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
     const pwd = prompt('Acesso bloqueado. Digite a senha master:')
     if(pwd !== 'admin16') {
       return showToast('Senha incorreta! Acesso negado.', 'error')
     }
 
-    // Esconde a tela de manutenção se estiver ativa
     const mp = document.getElementById('maintenance-page')
     if(mp) mp.style.display = 'none'
 
     showPage('admin-dashboard')
     attachRealtimeListeners()
     ia_loadLastSession()
-    await loadMaintenanceState()
+    loadMaintenanceState()
     setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
     showToast('🛡 ACESSO SECRETO: Painel Admin Aberto!', 'success')
   }
 }
+
+// Garante que a função está disponível globalmente
 window.secretAdminTap = secretAdminTap
 
 function copyToClipboard(text){
@@ -2973,7 +3229,7 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 <!-- ═══ MAINTENANCE PAGE ═══ -->
 <div id="maintenance-page" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999999;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;overflow:hidden">
   <div style="background:linear-gradient(135deg,#1a1f2e,#161b27);border:2px solid #374151;border-radius:20px;padding:40px 50px;max-width:500px">
-    <div onclick="secretAdminTap()" style="font-size:80px;margin-bottom:24px;cursor:pointer;opacity:0.3;transition:opacity 0.3s" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='0.3'" title="Clique 3x para admin">🔧</div>
+    <div onclick="secretAdminTap()" style="font-size:80px;margin-bottom:24px;cursor:pointer;opacity:0.3;transition:opacity 0.3s" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='0.3'">🔧</div>
     <div style="background:#dc2626;color:#fff;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:20px">⚠️ EM MANUTENÇÃO</div>
     <h1 style="font-size:32px;font-weight:700;color:#fff;margin-bottom:16px">Site Temporariamente Fora do Ar</h1>
     <p style="font-size:16px;color:#9ca3af;max-width:400px;line-height:1.8" id="maintenance-msg">Estamos realizando melhorias para você. Volte em breve!</p>

@@ -1,0 +1,5 @@
+# Firebase Functions
+
+node_modules/
+.env
+*.log
