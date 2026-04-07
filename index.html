@@ -3173,23 +3173,17 @@ let _secretTaps = 0
 let _secretTapsTimer = null
 
 function secretAdminTap(){
-  // Reseta contador se passar mais de 1.5 segundos entre cliques
   if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
   _secretTapsTimer = setTimeout(() => { _secretTaps = 0 }, 1500)
   
   _secretTaps++
-  console.log('🔐 Clique detectado:', _secretTaps)
   
-  // Feedback visual - mostra quantos cliques já foram dados
   const logo = document.querySelector('.auth-logo')
   if(logo){
     logo.style.transform = 'scale(1.1)'
     logo.style.transition = 'transform 0.1s'
     setTimeout(() => { logo.style.transform = 'scale(1)' }, 100)
   }
-  
-  // Mostra contador de cliques
-  showToast(`🔐 ${_secretTaps}/3 cliques`, 'info')
   
   if(_secretTaps >= 3){
     _secretTaps = 0
@@ -3199,7 +3193,6 @@ function secretAdminTap(){
       return showToast('Senha incorreta! Acesso negado.', 'error')
     }
 
-    // Esconde a tela de manutenção se estiver ativa
     const mp = document.getElementById('maintenance-page')
     if(mp) mp.style.display = 'none'
 
