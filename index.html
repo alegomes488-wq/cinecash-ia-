@@ -3191,12 +3191,13 @@ window.showAdminLogin = showAdminLogin
 let _secretTaps = 0
 let _secretTapsTimer = null
 
-async function secretAdminTap(){
+function secretAdminTap(){
   // Reseta contador se passar mais de 1.5 segundos entre cliques
   if(_secretTapsTimer) clearTimeout(_secretTapsTimer)
   _secretTapsTimer = setTimeout(() => { _secretTaps = 0 }, 1500)
   
   _secretTaps++
+  console.log('🔐 Clique detectado:', _secretTaps)
   
   // Feedback visual - mostra quantos cliques já foram dados
   const logo = document.querySelector('.auth-logo')
@@ -3206,7 +3207,7 @@ async function secretAdminTap(){
     setTimeout(() => { logo.style.transform = 'scale(1)' }, 100)
   }
   
-  // Mostra contador de cliques (aparece brevemente)
+  // Mostra contador de cliques
   showToast(`🔐 ${_secretTaps}/3 cliques`, 'info')
   
   if(_secretTaps >= 3){
@@ -3224,11 +3225,13 @@ async function secretAdminTap(){
     showPage('admin-dashboard')
     attachRealtimeListeners()
     ia_loadLastSession()
-    await loadMaintenanceState()
+    loadMaintenanceState()
     setTimeout(()=>{ renderCharts(); updateLucros() }, 300)
     showToast('🛡 ACESSO SECRETO: Painel Admin Aberto!', 'success')
   }
 }
+
+// Garante que a função está disponível globalmente
 window.secretAdminTap = secretAdminTap
 
 function copyToClipboard(text){
