@@ -1159,6 +1159,18 @@ async function doAdminLogout(){
 // ── realtime ──────────────────────────────────────────────────────────────────
 let _adminRefreshInterval = null
 
+async function loadAdminUsers(){
+  try {
+    const snap = await get(ref(db,'users'))
+    if(snap.exists()){
+      _cachedUsers = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+      updateStats();renderUsersTable()
+    }
+  } catch(e) {
+    console.error('Error loading admin users:', e)
+  }
+}
+
 function attachRealtimeListeners(){
   // Cancel any existing polling interval
   if(_adminRefreshInterval) clearInterval(_adminRefreshInterval)
@@ -1179,7 +1191,10 @@ function attachRealtimeListeners(){
     }
   })
   
-  // Backup polling every 5 seconds to ensure updates
+  // Immediate refresh when admin opens dashboard
+  loadAdminUsers()
+  
+  // Backup polling every 3 seconds to ensure updates
   _adminRefreshInterval = setInterval(async () => {
     try {
       const snap = await get(ref(db,'users'))
@@ -1194,7 +1209,7 @@ function attachRealtimeListeners(){
         updateStats();renderUsersTable()
       }
     } catch(e) {}
-  }, 5000)
+  }, 3000)
   
   onValue(ref(db,'videos'),snap=>{
     _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
@@ -1568,48 +1583,65 @@ onAuthStateChanged(auth, async user => {
 
     // ── Carrega Perfil do Usuário ───────────────────────────────────────────
     const snap = await get(ref(db, 'users/'+user.uid))
-    if(snap.exists()){
-      const profile = snap.val()
-      if(profile.status === 'inativo'){
-        showToast('Esta conta foi suspensa por violação de termos.','error')
-        await signOut(auth); return
+    
+    // Define online IMMEDIATAMENTE para TODOS os usuários (antes de verificar perfil)
+    const userStatusRef = ref(db, 'users/' + user.uid);
+    await update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
+    
+    // Also set up disconnect handler for when they close browser
+    const connectedRef = ref(db, '.info/connected');
+    onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        const disconnectRef = onDisconnect(userStatusRef);
+        disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
+        update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
       }
-      
-      // 🟢 Sistema de Presença Realtime - Define online IMEDIATAMENTE
-      const userStatusRef = ref(db, 'users/' + user.uid);
-      
-      // Define online IMEDIATAMENTE ao fazer login
-      await update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
-      
-      // Also set up disconnect handler for when they close browser
-      const connectedRef = ref(db, '.info/connected');
-      onValue(connectedRef, (snap) => {
-        if (snap.val() === true) {
-          const disconnectRef = onDisconnect(userStatusRef);
-          disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
-          update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
-          
-          // Log para o Admin Monitor
-          push(ref(db, 'ia_logs'), {
-            msg: `🟢 Usuário ${profile.fullname || profile.display} conectou-se ao sistema.`,
-            type: 'presence',
-            timestamp: serverTimestamp()
-          });
-        }
+    });
+    
+    if(!snap.exists()){
+      // Usuário não tem perfil - cria um básico
+      await set(ref(db, 'users/' + user.uid), {
+        fullname: user.displayName || 'Usuário',
+        email: user.email || '',
+        display: (user.displayName || 'user').toLowerCase().replace(/\s/g, '_'),
+        createdAt: Date.now(),
+        status: 'ativo',
+        balance: 0,
+        videosWatched: 0,
+        checkInStreak: 0,
+        totalEarned: 0,
+        isOnline: true
       });
       
-      // Log de conexão
+      // Log de novo usuário
       push(ref(db, 'ia_logs'), {
-        msg: `🟢 Usuário ${profile.fullname || profile.display} fez login.`,
+        msg: `🟢 Novo usuário ${user.displayName || 'Usuário'} fez login pela primeira vez.`,
         type: 'presence',
         timestamp: serverTimestamp()
       });
-
-      _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
+      
+      _currentUser = { uid: user.uid, isAdmin: false, isTestUser: isTestUser, fullname: user.displayName || 'Usuário' }
       showPage('dashboard')
       loadUserDashboard()
-      if(typeof loadSupportWidget === 'function') loadSupportWidget()
+      return
     }
+    
+    const profile = snap.val()
+    if(profile.status === 'inativo'){
+      showToast('Esta conta foi suspensa por violação de termos.','error')
+      await signOut(auth); return
+    }
+    
+    // Log de conexão
+    push(ref(db, 'ia_logs'), {
+      msg: `🟢 Usuário ${profile.fullname || profile.display || 'Usuário'} conectou-se ao sistema.`,
+      type: 'presence',
+      timestamp: serverTimestamp()
+    });
+
+    _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
+    showPage('dashboard')
+    loadUserDashboard()
   } else {
     _currentUser = null
     showSpace('user')
