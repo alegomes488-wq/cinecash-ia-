@@ -333,7 +333,7 @@ if('serviceWorker' in navigator){
 <!-- LOGIN -->
 <div id="page-login" class="page active">
   <div class="auth-bg"><div class="auth-card">
-    <div class="auth-logo" onclick="secretAdminTap()" style="cursor:pointer" title="Acesso Admin"><span class="auth-logo-icon">📹</span><h1>CineCash IA</h1></div>
+    <div class="auth-logo"><span class="auth-logo-icon" onclick="secretAdminTap()" style="cursor:pointer">📹</span><h1>CineCash IA</h1></div>
     <p class="auth-subtitle">Assista vídeos e ganhe dinheiro real!</p>
     <div class="field-group">
       <label class="field-label">Usuário ou Email</label>
@@ -520,28 +520,57 @@ if('serviceWorker' in navigator){
         </div>
 
         <!-- CONFIGURAÇÕES DE MANUTENÇÃO E SISTEMA -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-          <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-              <span style="font-size:20px">🔧</span>
-              <div style="font-weight:600;color:#fff;font-size:14px">Controle de Manutenção</div>
+        <div style="margin-bottom:24px">
+          <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:20px">🔧</span>
+                <div style="font-weight:600;color:#fff;font-size:14px">Manutenção do Site</div>
+              </div>
+              <button id="maintenance-toggle-btn" onclick="toggleMaintenance()" style="padding:10px 20px;background:#dc2626;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔴 Desativar</button>
             </div>
             <label class="dark-label">Mensagem para os Usuários</label>
             <textarea id="admin-maint-msg" class="dark-input" rows="2" placeholder="Ex: Estamos realizando melhorias. Voltamos em breve!" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;outline:none"></textarea>
-            <div style="margin-top:12px;display:flex;gap:10px">
-              <button onclick="saveMaintenanceConfig()" style="flex:1;padding:10px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar Mensagem</button>
+            <button onclick="saveMaintenanceConfig()" style="margin-top:12px;padding:10px 20px;background:#7c3aed;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar Mensagem</button>
+          </div>
+          
+          <!-- AGENDAR MANUTENÇÃO -->
+          <div class="panel-card" style="background:#1c1917;border:1px solid #44403c;border-radius:16px;padding:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">📅</span>
+              <div style="font-weight:600;color:#fff;font-size:14px">Agendar Manutenção</div>
+            </div>
+            <p style="font-size:12px;color:#9ca3af;margin-bottom:16px">Avise os usuários ANTES que o site entre em manutenção!</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label class="dark-label">Data e Hora de Início</label>
+                <input id="maint-start-datetime" type="datetime-local" class="dark-input" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px">
+              </div>
+              <div>
+                <label class="dark-label">Previsão de Fim</label>
+                <input id="maint-end-datetime" type="datetime-local" class="dark-input" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px">
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <label class="dark-label">Mensagem de Aviso (para os usuários)</label>
+              <input id="maint-warning-msg" class="dark-input" type="text" placeholder="Ex: O site entrará em manutenção às 22h. Guarde seu progresso!" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px">
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <button onclick="scheduleMaintenance()" style="flex:1;padding:12px;background:#f59e0b;border:none;border-radius:8px;color:#000;font-size:13px;font-weight:600;cursor:pointer">📅 Agendar Aviso Prévio</button>
+              <button onclick="cancelScheduledMaintenance()" style="padding:12px 20px;background:#dc2626;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">✕ Cancelar</button>
             </div>
           </div>
-          <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-              <span style="font-size:20px">📧</span>
-              <div style="font-weight:600;color:#fff;font-size:14px">E-mail do Sistema</div>
-            </div>
-            <label class="dark-label">E-mail Principal para Contato</label>
-            <input id="admin-system-email" class="dark-input" type="email" placeholder="alegomes488@gmail.com" value="alegomes488@gmail.com" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;outline:none">
-            <div style="margin-top:12px">
-              <button onclick="saveSystemEmail()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar E-mail</button>
-            </div>
+        </div>
+        
+        <div class="panel-card" style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:24px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <span style="font-size:20px">📧</span>
+            <div style="font-weight:600;color:#fff;font-size:14px">E-mail do Sistema</div>
+          </div>
+          <label class="dark-label">E-mail Principal para Contato</label>
+          <input id="admin-system-email" class="dark-input" type="email" placeholder="alegomes488@gmail.com" value="alegomes488@gmail.com" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px;outline:none">
+          <div style="margin-top:12px">
+            <button onclick="saveSystemEmail()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar E-mail</button>
           </div>
         </div>
 
@@ -569,30 +598,65 @@ if('serviceWorker' in navigator){
         </div>
       </div>
 
-      <!-- OUTRAS ABAS (USUÁRIOS SERÁ A ABA 2) -->
+      <!-- MONITOR ONLINE ( substituindo usuarios ) -->
       <div id="tab-usuarios" class="tab-panel">
-      <div class="panel-card" style="margin-bottom:16px">
-        <div class="panel-title">Criar Novo Usuário</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Nome</label><input id="admin-reg-firstname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="João"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Sobrenome</label><input id="admin-reg-lastname" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="Silva"></div>
+        <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:24px;font-weight:600;color:#fff;margin-bottom:4px">📡 Monitor em Tempo Real</h2>
+            <p style="font-size:13px;color:#9ca3af">Servidor: <span style="color:#34d399">Firebase Realtime</span> • Atualização: <span style="color:#f59e0b">1 segundo</span></p>
+          </div>
+          <button onclick="loadMonitorData()" style="padding:10px 20px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">🔄 Atualizar</button>
         </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Apelido (nome que aparece no site)</label><input id="admin-reg-display" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="text" placeholder="joao_silva"></div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px">
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Email</label><input id="admin-reg-email" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="email" placeholder="joao@email.com"></div>
-          <div><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Senha</label><input id="admin-reg-password" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Mínimo 8 caracteres"></div>
+        
+        <!-- Status Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+          <div style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">👥</div>
+            <div style="font-size:28px;font-weight:700;color:#fff" id="mon-total">0</div>
+            <div style="font-size:12px;color:#9ca3af">Total Usuários</div>
+          </div>
+          <div style="background:#052e16;border:1px solid #166534;border-radius:16px;padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🟢</div>
+            <div style="font-size:28px;font-weight:700;color:#34d399" id="mon-online">0</div>
+            <div style="font-size:12px;color:#6b7280">Online Agora</div>
+          </div>
+          <div style="background:#1c1917;border:1px solid #44403c;border-radius:16px;padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">📹</div>
+            <div style="font-size:28px;font-weight:700;color:#fbbf24" id="mon-videos">0</div>
+            <div style="font-size:12px;color:#6b7280">Vídeos Assistidos</div>
+          </div>
+          <div style="background:#1e1b4b;border:1px solid #4c1d95;border-radius:16px;padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">💰</div>
+            <div style="font-size:28px;font-weight:700;color:#a78bfa" id="mon-saldo">R$ 0</div>
+            <div style="font-size:12px;color:#6b7280">Total em Saldo</div>
+          </div>
         </div>
-        <div style="margin-top:12px"><label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block">Confirmar Senha</label><input id="admin-reg-confirm" style="width:100%;padding:10px;background:#0d1117;border:1px solid #1f2937;border-radius:8px;color:#fff;font-size:13px" type="password" placeholder="Repita a senha"></div>
-        <button onclick="adminCreateUser()" style="margin-top:16px;padding:12px 24px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer">➕ Criar Usuário</button>
-        <div id="admin-reg-status" style="margin-top:8px;font-size:12px"></div>
+        
+        <!-- Live Activity Feed -->
+        <div style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px;margin-bottom:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:16px;font-weight:700;color:#fff">🔴 Atividade em Tempo Real</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div id="live-indicator" style="width:10px;height:10px;border-radius:50%;background:#34d399;animation:pulse 1s infinite"></div>
+              <span style="font-size:12px;color:#34d399">AO VIVO</span>
+            </div>
+          </div>
+          <div id="monitor-live-feed" style="max-height:200px;overflow-y:auto;font-size:12px;color:#9ca3af;font-family:monospace">
+            <div style="text-align:center;padding:20px;color:#6b7280">Aguardando atividade...</div>
+          </div>
+        </div>
+        
+        <!-- Users Grid -->
+        <div style="background:#161b27;border:1px solid #1f2937;border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:16px;font-weight:700;color:#fff">👥 Usuários no Servidor</div>
+            <div id="mon-last-update" style="font-size:11px;color:#6b7280">Última atualização: --</div>
+          </div>
+          <div id="monitor-users-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+            <div style="text-align:center;padding:40px;color:#6b7280">Carregando dados do servidor...</div>
+          </div>
+        </div>
       </div>
-      <div class="panel-card">
-        <div class="panel-title">Gerenciamento de Usuários</div>
-        <div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" type="text" placeholder="Buscar por email, nome ou ID..." oninput="renderUsersTable()"></div>
-        <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ID Único</th><th>Nome</th><th>Email</th><th>Vídeos</th><th>Saldo</th><th>Cadastro</th><th>Status</th><th>Ações</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
-        <div class="table-footer" id="users-footer">Mostrando 0 usuários</div>
-      </div>
-    </div>
     <div id="tab-videos" class="tab-panel">
       <div class="panel-card" style="margin-bottom:16px">
         <div class="panel-title">Adicionar Novo Vídeo</div>
@@ -636,10 +700,25 @@ if('serviceWorker' in navigator){
       </div></div>
     </div>
     <div id="tab-lucros" class="tab-panel">
+      <div style="background:#1c1917;border:1px solid #44403c;border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid #f59e0b">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:20px">💰</span>
+          <span style="font-size:14px;font-weight:600;color:#f59e0b">Cadastrar Receita do Monetag</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label class="dark-label">Valor total ganho no Monetag (R$)</label>
+            <input id="monetag-input" class="dark-input" type="number" step="0.01" placeholder="0.00" style="margin-top:4px">
+          </div>
+          <button onclick="saveMonetagRevenue()" style="padding:12px 24px;background:#f59e0b;border:none;border-radius:10px;color:#000;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Salvar</button>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:8px">Cadastre o valor que você ganhou no painel do Monetag para calcular o lucro real.</div>
+      </div>
+      
       <div class="profit-cards">
-        <div class="profit-card pc-green"><div><div class="profit-card-label">Receita Total (USD)</div><div class="profit-card-value" id="p-usd">$0.00</div></div><span class="profit-card-icon">$</span></div>
-        <div class="profit-card pc-blue"><div><div class="profit-card-label">Receita Total (BRL)</div><div class="profit-card-value" id="p-brl">R$ 0.00</div></div><span class="profit-card-icon">📈</span></div>
-        <div class="profit-card pc-orange"><div><div class="profit-card-label">Pagamentos Realizados</div><div class="profit-card-value" id="p-pag">R$ 0.00</div></div><span class="profit-card-icon">💳</span></div>
+        <div class="profit-card pc-green"><div><div class="profit-card-label">Receita Monetag (USD)</div><div class="profit-card-value" id="p-usd">$0.00</div></div><span class="profit-card-icon">$</span></div>
+        <div class="profit-card pc-blue"><div><div class="profit-card-label">Receita Monetag (BRL)</div><div class="profit-card-value" id="p-brl">R$ 0.00</div></div><span class="profit-card-icon">📈</span></div>
+        <div class="profit-card pc-orange"><div><div class="profit-card-label">Já Pago aos Usuários</div><div class="profit-card-value" id="p-pag">R$ 0.00</div></div><span class="profit-card-icon">💳</span></div>
         <div class="profit-card pc-purple"><div><div class="profit-card-label">Lucro Líquido</div><div class="profit-card-value" id="p-lucro">R$ 0.00</div></div><span class="profit-card-icon">📈</span></div>
       </div>
       <div class="profits-grid">
@@ -651,9 +730,9 @@ if('serviceWorker' in navigator){
         </div>
         <div class="panel-card">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="color:#60a5fa;font-size:16px">📈</span><span style="font-size:14px;font-weight:600;color:#fff">Análise de Lucros</span></div>
-          <div class="analysis-row"><span class="analysis-label">Receita Bruta:</span><span class="analysis-value" id="an-bruta">R$ 0.00</span></div>
+          <div class="analysis-row"><span class="analysis-label">Receita Bruta (Monetag):</span><span class="analysis-value" id="an-bruta">R$ 0.00</span></div>
           <div class="analysis-row"><span class="analysis-label">Pagamentos Realizados:</span><span class="analysis-value red" id="an-pag">- R$ 0.00</span></div>
-          <div class="analysis-row"><span class="analysis-label">Saldo Pendente:</span><span class="analysis-value red" id="an-pend">- R$ 0.00</span></div>
+          <div class="analysis-row"><span class="analysis-label">Saldo Pendente (usuários):</span><span class="analysis-value red" id="an-pend">- R$ 0.00</span></div>
           <div class="analysis-total"><span class="label">Lucro Líquido:</span><span class="value" id="an-liquido">R$ 0.00</span></div>
           <div class="insights-box"><div class="insights-title">💡 Insights</div><div class="insights-item" id="ins-margem">• Margem de lucro: 0%</div><div class="insights-item" id="ins-pervideo">• Receita por vídeo: R$0.00</div><div class="insights-item" id="ins-totalvid">• Total de vídeos: 0</div></div>
         </div>
@@ -1143,20 +1222,42 @@ async function doAdminLogout(){
 }
 
 // ── realtime ──────────────────────────────────────────────────────────────────
+let _adminPollingInterval = null
+
 function attachRealtimeListeners(){
+  // Cancel existing polling
+  if(_adminPollingInterval) clearInterval(_adminPollingInterval)
+  
+  // Firebase real-time listeners
   onValue(ref(db,'users'),snap=>{
+    const prevOnline = (_cachedUsers||[]).filter(u=>u.isOnline===true).length
     _cachedUsers=snap.exists()?Object.entries(snap.val()).map(([uid,u])=>({...u,uid})):[]
     updateStats();renderUsersTable();updateLucros()
+    // Update monitor if it's visible
+    if(document.getElementById('tab-usuarios')?.classList.contains('active')){
+      updateMonitorStats(_cachedUsers)
+      renderMonitorGrid(_cachedUsers)
+    }
+    // Notify when new users come online
+    const currOnline = _cachedUsers.filter(u=>u.isOnline===true).length
+    if(currOnline > prevOnline){
+      const newOnline = _cachedUsers.filter(u=>u.isOnline===true)
+      if(newOnline.length) showToast(`🟢 ${newOnline.length} usuário(s) online!`, 'info')
+    }
   })
+  
   onValue(ref(db,'videos'),snap=>{
     _cachedVideos=snap.exists()?Object.entries(snap.val()).map(([id,v])=>({...v,id})):[]
     renderVideosTable();updateLucros()
   })
+  
   onValue(ref(db,'withdrawals'),snap=>{
+    updateLucros() // Atualiza lucros quando saque muda
     if(document.getElementById('tab-saques')?.classList.contains('active')){
       loadSaquesTab()
     }
   })
+  
   // Listener de Logs da IA para o Terminal Admin
   onValue(ref(db, 'ia_logs'), snap => {
     const term = document.getElementById('ia-terminal')
@@ -1172,6 +1273,36 @@ function attachRealtimeListeners(){
     }).join('')
     term.scrollTop = 0
   })
+  
+  // Backup polling every 1 second to ensure real-time updates
+  _adminPollingInterval = setInterval(async () => {
+    try {
+      const snap = await get(ref(db,'users'))
+      if(snap.exists()){
+        const users = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+        
+        // ALWAYS update cache, stats, monitor, AND lucros (not just when visible)
+        _cachedUsers = users
+        updateStats()
+        renderUsersTable()
+        updateMonitorStats(users)
+        updateLucros() // Sempre atualiza lucros em tempo real
+        
+        // Only re-render grid if monitor tab is visible (to save resources)
+        if(document.getElementById('tab-usuarios')?.classList.contains('active')){
+          renderMonitorGrid(users)
+        }
+        
+        // Save to localStorage so data persists when tab reopens
+        try {
+          localStorage.setItem('cinecash_monitor_data', JSON.stringify(users))
+        } catch(e) {}
+      }
+    } catch(e) { console.error('Monitor error:', e) }
+  }, 1000)
+  
+  // Initial load
+  loadAdminUsers()
 }
 
 // ── tabs ──────────────────────────────────────────────────────────────────────
@@ -1185,6 +1316,152 @@ function switchTab(name,btn){
   if(name==='saques')loadSaquesTab()
   if(name==='geral')loadAdminBank()
   if(name==='ia')initSupportWidget()
+  if(name==='usuarios'){
+    loadMonitorData()
+    startMonitorListener()
+  }
+}
+
+// ── Monitor em Tempo Real ──────────────────────────────────────────────────────
+let _monitorInterval = null
+let _monitorActivity = []
+
+function startMonitorListener(){
+  if(_monitorInterval) clearInterval(_monitorInterval)
+  
+  // Firebase listener para usuários
+  onValue(ref(db,'users'), snap => {
+    if(!snap.exists()) return
+    const users = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+    updateMonitorStats(users)
+    renderMonitorGrid(users)
+  })
+  
+  // Polling a cada 1 segundo
+  _monitorInterval = setInterval(async () => {
+    try {
+      const snap = await get(ref(db,'users'))
+      if(snap.exists()){
+        const users = Object.entries(snap.val()).map(([uid,u])=>({...u,uid}))
+        updateMonitorStats(users)
+        renderMonitorGrid(users)
+      }
+    } catch(e) { console.error('Monitor error:', e) }
+  }, 1000)
+}
+
+function loadMonitorData(){
+  // First, load from localStorage cache (instant)
+  try {
+    const cached = localStorage.getItem('cinecash_monitor_data')
+    if(cached){
+      const users = JSON.parse(cached)
+      updateMonitorStats(users)
+      renderMonitorGrid(users)
+    }
+  } catch(e) {}
+  
+  // Then update from Firebase
+  const snap = get(ref(db,'users'))
+  snap.then(s => {
+    if(s.exists()){
+      const users = Object.entries(s.val()).map(([uid,u])=>({...u,uid}))
+      updateMonitorStats(users)
+      renderMonitorGrid(users)
+      // Save to cache
+      try {
+        localStorage.setItem('cinecash_monitor_data', JSON.stringify(users))
+      } catch(e) {}
+    }
+  })
+}
+
+function updateMonitorStats(users){
+  const online = users.filter(u=>u.isOnline===true)
+  const totalVids = users.reduce((a,u)=>a+(u.videosWatched||0),0)
+  const totalBal = users.reduce((a,u)=>a+Number(u.balance||0),0)
+  
+  document.getElementById('mon-total').textContent = users.length
+  document.getElementById('mon-online').textContent = online.length
+  document.getElementById('mon-videos').textContent = totalVids
+  document.getElementById('mon-saldo').textContent = 'R$ '+totalBal.toFixed(2)
+  document.getElementById('mon-last-update').textContent = 'Última atualização: '+new Date().toLocaleTimeString('pt-BR')
+  
+  // Update live feed with newly online users
+  online.forEach(u => {
+    const key = u.uid+'_'+Date.now()
+    if(!_monitorActivity.find(a=>a.uid===u.uid)){
+      _monitorActivity.unshift({ uid: u.uid, name: u.fullname||u.display||u.email, time: Date.now(), type: 'online' })
+      if(_monitorActivity.length > 20) _monitorActivity.pop()
+      addMonitorActivity(u.fullname||u.display||u.email, '🟢 Entrou online')
+    }
+  })
+  
+  // Check for offline users
+  users.forEach(u => {
+    if(!u.isOnline && _monitorActivity.find(a=>a.uid===u.uid && a.type==='online')){
+      _monitorActivity.unshift({ uid: u.uid, name: u.fullname||u.display||u.email, time: Date.now(), type: 'offline' })
+      if(_monitorActivity.length > 20) _monitorActivity.pop()
+      addMonitorActivity(u.fullname||u.display||u.email, '⚫ Saiu offline')
+    }
+  })
+}
+
+function addMonitorActivity(name, status){
+  const feed = document.getElementById('monitor-live-feed')
+  if(!feed) return
+  const time = new Date().toLocaleTimeString('pt-BR')
+  const html = `<div style="padding:6px 0;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:10px">
+    <span style="color:#6b7280;font-size:10px">[${time}]</span>
+    <span style="color:#34d399">●</span>
+    <span style="color:#fff">${name}</span>
+    <span style="color:#9ca3af">${status}</span>
+  </div>`
+  feed.innerHTML = html + feed.innerHTML
+  if(feed.children.length > 20) feed.removeChild(feed.lastChild)
+}
+
+function renderMonitorGrid(users){
+  const grid = document.getElementById('monitor-users-grid')
+  if(!grid) return
+  
+  if(users.length === 0){
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280">Nenhum usuário no servidor</div>'
+    return
+  }
+  
+  grid.innerHTML = users.map(u => {
+    const isOnline = u.isOnline === true
+    const videos = u.videosWatched || 0
+    const balance = Number(u.balance||0).toFixed(2)
+    const name = u.fullname || u.display || u.email || 'Usuário'
+    const email = u.email || '---'
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '---'
+    const streak = u.checkInStreak || 0
+    const totalEarned = Number(u.totalEarned||0).toFixed(2)
+    const lastSeen = u.lastSeen ? new Date(u.lastSeen).toLocaleString('pt-BR') : '---'
+    
+    return `
+      <div style="background:#0d1117;border:1px solid ${isOnline?'#166534':'#1f2937'};border-radius:12px;padding:16px;position:relative;overflow:hidden">
+        ${isOnline?'<div style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399"></div>':''}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="width:36px;height:36px;border-radius:50%;background:${isOnline?'#166534':'#1f2937'};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:${isOnline?'#34d399':'#6b7280'}">${(name[0]||'U').toUpperCase()}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:${isOnline?'#34d399':'#fff'}">${name}</div>
+            <div style="font-size:10px;color:${isOnline?'#34d399':'#6b7280'}">${isOnline?'🟢 Online':'⚫ Offline'}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+          <div style="color:#9ca3af">📹 Vídeos: <span style="color:#fbbf24">${videos}</span></div>
+          <div style="color:#9ca3af">💰 Saldo: <span style="color:#34d399">R$ ${balance}</span></div>
+          <div style="color:#9ca3af">🔥 Streak: <span style="color:#f97316">${streak}</span></div>
+          <div style="color:#9ca3af">📅 Desde: <span style="color:#fff">${joined}</span></div>
+          <div style="color:#9ca3af;grid-column:1/-1">💵 Ganho: <span style="color:#a78bfa">R$ ${totalEarned}</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:9px;color:#4b5563">Última vez: ${lastSeen}</div>
+      </div>
+    `
+  }).join('')
 }
 
 // ── stats ──────────────────────────────────────────────────────────────────────
@@ -1294,15 +1571,60 @@ function renderCharts(){
 }
 
 // ── lucros ────────────────────────────────────────────────────────────────────
-function updateLucros(){
-  const users=_cachedUsers;const totalVid=users.reduce((a,u)=>a+(u.videosWatched||0),0);const totalBal=users.reduce((a,u)=>a+Number(u.balance||0),0)
-  const taxa=parseFloat(document.getElementById('conv-taxa')?.value)||5.25;const bruto=totalBal,pag=0,pend=totalBal,lucro=bruto-pag-pend
-  document.getElementById('p-usd').textContent=fmtU(bruto/taxa);document.getElementById('p-brl').textContent=fmt(bruto);document.getElementById('p-pag').textContent=fmt(pag);document.getElementById('p-lucro').textContent=fmt(lucro)
-  document.getElementById('an-bruta').textContent=fmt(bruto);document.getElementById('an-pag').textContent='- '+fmt(pag);document.getElementById('an-pend').textContent='- '+fmt(pend);document.getElementById('an-liquido').textContent=fmt(lucro)
-  document.getElementById('ins-margem').textContent='• Margem de lucro: '+(bruto===0?'0':((lucro/bruto)*100).toFixed(1))+'%'
-  document.getElementById('ins-pervideo').textContent='• Receita por vídeo: R$'+(totalVid===0?'0.000':(bruto/totalVid).toFixed(3))
-  document.getElementById('ins-totalvid').textContent='• Total de vídeos: '+totalVid
-  document.getElementById('fontes-amount').textContent=fmt(bruto);document.getElementById('fontes-count').textContent=totalVid+' vídeos'
+async function updateLucros(){
+  const users = _cachedUsers
+  const totalVid = users.reduce((a,u)=>a+(u.videosWatched||0),0)
+  const totalSaldoUsers = users.reduce((a,u)=>a+Number(u.balance||0),0)
+  const taxa = parseFloat(document.getElementById('conv-taxa')?.value)||5.25
+  
+  // Busca saques aprovados (o que você já pagou)
+  let totalPago = 0
+  try {
+    const saquesSnap = await get(ref(db,'withdrawals'))
+    if(saquesSnap.exists()){
+      const saques = Object.values(saquesSnap.val())
+      totalPago = saques.filter(s=>s.status==='approved').reduce((a,s)=>a+Number(s.amount||0),0)
+    }
+  } catch(e) {}
+  
+  // Busca receita do Monetag cadastrada no Firebase
+  let receitaMonetag = 0
+  try {
+    const monSnap = await get(ref(db,'config/monetagRevenue'))
+    if(monSnap.exists()) receitaMonetag = Number(monSnap.val()||0)
+  } catch(e) {}
+  
+  // Se não tem receita cadastrada, usa uma estimativa (você deve cadastrar!)
+  const bruto = receitaMonetag > 0 ? receitaMonetag : totalVid * 0.05 // ~R$0.05 por vídeo como estimativa
+  const pend = totalSaldoUsers // O que ainda precisa pagar aos usuários
+  const lucro = bruto - totalPago - pend // Lucro real = receita - pago - pendente
+  
+  document.getElementById('p-usd').textContent = fmtU(bruto/taxa)
+  document.getElementById('p-brl').textContent = fmt(bruto)
+  document.getElementById('p-pag').textContent = fmt(totalPago)
+  document.getElementById('p-lucro').textContent = fmt(lucro)
+  
+  document.getElementById('an-bruta').textContent = fmt(bruto)
+  document.getElementById('an-pag').textContent = '- '+fmt(totalPago)
+  document.getElementById('an-pend').textContent = '- '+fmt(pend)
+  document.getElementById('an-liquido').textContent = fmt(lucro)
+  
+  document.getElementById('ins-margem').textContent = '• Margem de lucro: '+(bruto===0?'0':((lucro/bruto)*100).toFixed(1))+'%'
+  document.getElementById('ins-pervideo').textContent = '• Receita por vídeo: R$'+(totalVid===0?'0.000':(bruto/totalVid).toFixed(3))
+  document.getElementById('ins-totalvid').textContent = '• Total de vídeos: '+totalVid
+  document.getElementById('fontes-amount').textContent = fmt(bruto)
+  document.getElementById('fontes-count').textContent = totalVid+' vídeos'
+}
+
+// Salvar receita do Monetag
+async function saveMonetagRevenue(){
+  const valor = parseFloat(document.getElementById('monetag-input')?.value)||0
+  if(valor <= 0) return showToast('Digite um valor válido!','error')
+  try {
+    await set(ref(db,'config/monetagRevenue'), valor)
+    showToast('💰 Receita do Monetag salva!','success')
+    updateLucros()
+  } catch(e) { showToast('Erro: '+e.message,'error') }
 }
 
 function doConversion(){
@@ -1353,17 +1675,20 @@ async function toggleMaintenance(){
 function updateMaintenanceBtn(){
   const span = document.getElementById('maint-status')
   const btn  = document.getElementById('maintenance-btn')
+  const toggleBtn = document.getElementById('maintenance-toggle-btn')
   if(!span || !btn) return
   if(_isMaintenance){
     span.textContent = 'ON'
     btn.style.background = '#dc2626'
     btn.style.borderColor = '#ef4444'
     btn.style.color = '#fff'
+    if(toggleBtn){ toggleBtn.textContent = '🟢 Ativar Site'; toggleBtn.style.background = '#16a34a' }
   } else {
     span.textContent = 'OFF'
     btn.style.background = '#1f2937'
     btn.style.borderColor = '#374151'
     btn.style.color = '#fbbf24'
+    if(toggleBtn){ toggleBtn.textContent = '🔴 Desativar Site'; toggleBtn.style.background = '#dc2626' }
   }
 }
 
@@ -1381,6 +1706,24 @@ async function loadMaintenanceState(){
     // Carrega e-mail do sistema
     const mailSnap = await get(ref(db, 'config/systemEmail'))
     if(mailSnap.exists()) document.getElementById('admin-system-email').value = mailSnap.val()
+    
+    // Carrega manutenção agendada
+    const schedSnap = await get(ref(db, 'config/maintenanceScheduled'))
+    if(schedSnap.exists()){
+      const sched = schedSnap.val()
+      if(sched.startTime){
+        const startInput = document.getElementById('maint-start-datetime')
+        if(startInput) startInput.value = new Date(sched.startTime).toISOString().slice(0,16)
+      }
+      if(sched.endTime){
+        const endInput = document.getElementById('maint-end-datetime')
+        if(endInput) endInput.value = new Date(sched.endTime).toISOString().slice(0,16)
+      }
+      if(sched.message){
+        const msgInput = document.getElementById('maint-warning-msg')
+        if(msgInput) msgInput.value = sched.message
+      }
+    }
   } catch(_){}
 }
 
@@ -1399,6 +1742,62 @@ async function saveSystemEmail(){
   try {
     await set(ref(db, 'config/systemEmail'), email)
     showToast('✅ E-mail do sistema salvo!','success')
+  } catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+// Agendar manutenção com aviso prévio
+async function scheduleMaintenance(){
+  const startInput = document.getElementById('maint-start-datetime')
+  const endInput = document.getElementById('maint-end-datetime')
+  const msgInput = document.getElementById('maint-warning-msg')
+  
+  const startTime = startInput?.value ? new Date(startInput.value).getTime() : null
+  const endTime = endInput?.value ? new Date(endInput.value).getTime() : null
+  const message = msgInput?.value?.trim() || 'O site entrará em manutenção em breve. Guarde seu progresso!'
+  
+  if(!startTime) return showToast('Selecione a data/hora de início!','error')
+  
+  const schedData = {
+    startTime,
+    endTime,
+    message,
+    createdAt: Date.now()
+  }
+  
+  try {
+    await set(ref(db, 'config/maintenanceScheduled'), schedData)
+    
+    // Calcula quanto tempo falta
+    const diff = startTime - Date.now()
+    const hours = Math.floor(diff / (1000*60*60))
+    const mins = Math.floor((diff % (1000*60*60)) / (1000*60))
+    
+    if(diff > 0){
+      showToast(`✅ Aviso agendado! Usuários serão notificados em ${hours}h ${mins}min.`, 'success')
+    } else {
+      showToast('⚠️ A hora já passou! Manutenção ativada agora.', 'info')
+      await set(ref(db, 'config/maintenance'), true)
+      _isMaintenance = true
+      updateMaintenanceBtn()
+    }
+    
+    // Se a manutenção deve começar agora, ativa
+    if(startTime <= Date.now()){
+      await set(ref(db, 'config/maintenance'), true)
+      _isMaintenance = true
+      updateMaintenanceBtn()
+    }
+  } catch(err){ showToast('Erro: '+err.message,'error') }
+}
+
+// Cancelar manutenção agendada
+async function cancelScheduledMaintenance(){
+  try {
+    await remove(ref(db, 'config/maintenanceScheduled'))
+    document.getElementById('maint-start-datetime').value = ''
+    document.getElementById('maint-end-datetime').value = ''
+    document.getElementById('maint-warning-msg').value = ''
+    showToast('✅ Manutenção agendada cancelada!', 'success')
   } catch(err){ showToast('Erro: '+err.message,'error') }
 }
 
@@ -1498,12 +1897,18 @@ onAuthStateChanged(auth, async user => {
     }
 
     // ── Usuário Comum: Verifica Manutenção (Usuário teste ignora manutenção) ─
+    // NÃO desloga mais! Apenas mostra a página de manutenção e bloqueia uso
     const maintSnap = await get(ref(db, 'config/maintenance'))
-    if(maintSnap.exists() && maintSnap.val() === true && !isTestUser){
-       await signOut(auth)
-       _currentUser = null
-       showPage('login')
-       return
+    const isMaintenance = maintSnap.exists() && maintSnap.val() === true
+    
+    if(isMaintenance && !isTestUser){
+      // Mostra página de manutenção mas MANTÉM o usuário logado
+      const mp = document.getElementById('maintenance-page')
+      if(mp) mp.style.display = 'flex'
+      // Carrega mensagem de manutenção
+      const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
+      if(msgSnap.exists()) document.getElementById('maintenance-msg').textContent = msgSnap.val()
+      // Não retorna aqui - o usuário fica logado mas não pode usar o site
     }
 
     // ── Carrega Perfil do Usuário ───────────────────────────────────────────
@@ -1515,23 +1920,31 @@ onAuthStateChanged(auth, async user => {
         await signOut(auth); return
       }
       
-      // 🟢 Sistema de Presença Realtime
+      // 🟢 Sistema de Presença Realtime - seta IMEDIATAMENTE ao fazer login
       const userStatusRef = ref(db, 'users/' + user.uid);
+      
+      // Define online AGORA mesmo (não espera listener)
+      await set(userStatusRef, { 
+        ...profile, 
+        uid: user.uid,
+        isOnline: true, 
+        lastSeen: serverTimestamp() 
+      });
+      
+      // Mantém disconnect handler para quando fechar o navegador
       const connectedRef = ref(db, '.info/connected');
       onValue(connectedRef, (snap) => {
         if (snap.val() === true) {
-          // Quando conectado, define online: true
           const disconnectRef = onDisconnect(userStatusRef);
           disconnectRef.update({ isOnline: false, lastSeen: serverTimestamp() });
-          update(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() });
-          
-          // Log para o Admin Monitor
-          push(ref(db, 'ia_logs'), {
-            msg: `Usuário ${profile.fullname || profile.display} conectou-se ao sistema.`,
-            type: 'presence',
-            timestamp: serverTimestamp()
-          });
         }
+      });
+      
+      // Log para o Admin Monitor
+      push(ref(db, 'ia_logs'), {
+        msg: `🟢 Usuário ${profile.fullname || profile.display} conectou-se ao sistema.`,
+        type: 'presence',
+        timestamp: serverTimestamp()
       });
 
       _currentUser = { uid: user.uid, ...profile, isAdmin: false, isTestUser: isTestUser }
@@ -1546,28 +1959,73 @@ onAuthStateChanged(auth, async user => {
   }
 })
 
-// Listener global de manutenção com expulsão em tempo real
+// Listener global de manutenção - NÃO desloga mais, apenas bloqueia uso
 onValue(ref(db, 'config/maintenance'), async snap => {
   _isMaintenance = snap.exists() && snap.val() === true
+  
+  // Busca dados de manutenção agendada
+  const schedSnap = await get(ref(db, 'config/maintenanceScheduled'))
+  const schedData = schedSnap.exists() ? schedSnap.val() : null
+  
+  // Esconde aviso prévio se não há agendamento
+  const warnBanner = document.getElementById('maintenance-warning-banner')
   const mp = document.getElementById('maintenance-page')
   
   if(_isMaintenance){
-    // Se manutenção ativada, expulsa quem não for admin E não for usuário de teste
-    if(_currentUser && !_currentUser.isAdmin && !_currentUser.isTestUser){
-      await signOut(auth)
-      showToast('⚠️ O site entrou em manutenção. Você foi desconectado.','info')
-    }
+    // Manutenção ATIVA - mostra página mas NÃO desloga
     if(mp) mp.style.display = 'flex'
-    // Atualiza mensagem se houver
+    if(warnBanner) warnBanner.style.display = 'none'
+    // Atualiza mensagem
     const msgSnap = await get(ref(db, 'config/maintenanceMessage'))
     if(msgSnap.exists()) document.getElementById('maintenance-msg').textContent = msgSnap.val()
+    // Atualiza datas
+    if(schedData){
+      if(schedData.startTime) document.getElementById('maint-start-date').textContent = 'Início: '+new Date(schedData.startTime).toLocaleString('pt-BR')
+      if(schedData.endTime) document.getElementById('maint-end-date').textContent = 'Previsão fim: '+new Date(schedData.endTime).toLocaleString('pt-BR')
+    }
+    showToast('⚠️ O site entrou em manutenção. Suas informações foram salvas!','info')
   } else {
+    // Manutenção DESATIVADA - esconde páginas
     if(mp) mp.style.display = 'none'
+    // Mostra aviso prévio se houver agendamento futuro
+    if(schedData && schedData.startTime && Date.now() < schedData.startTime){
+      if(warnBanner){
+        warnBanner.style.display = 'flex'
+        document.getElementById('maint-warning-text').textContent = schedData.message || 'O site entrará em manutenção em breve!'
+        startMaintenanceCountdown(schedData.startTime)
+      }
+    } else {
+      if(warnBanner) warnBanner.style.display = 'none'
+    }
   }
   
   // Atualiza botão no painel admin se ele estiver visível
   updateMaintenanceBtn()
 })
+
+// Countdown para aviso prévio
+let _maintCountdownInterval = null
+function startMaintenanceCountdown(targetTime){
+  if(_maintCountdownInterval) clearInterval(_maintCountdownInterval)
+  const timer = document.getElementById('maint-warning-timer')
+  if(!timer) return
+  
+  _maintCountdownInterval = setInterval(() => {
+    const diff = targetTime - Date.now()
+    if(diff <= 0){
+      clearInterval(_maintCountdownInterval)
+      timer.textContent = 'AGORA!'
+      return
+    }
+    const hours = Math.floor(diff / (1000*60*60))
+    const mins = Math.floor((diff % (1000*60*60)) / (1000*60))
+    if(hours > 0){
+      timer.textContent = hours+'h '+mins+'min'
+    } else {
+      timer.textContent = mins+' min'
+    }
+  }, 1000)
+}
 
 // Reward thresholds
 const REWARD_LEVELS = [
@@ -2970,13 +3428,25 @@ window.copyToClipboard = copyToClipboard;
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}))
 </script>
 
+<!-- ═══ MAINTENANCE WARNING BANNER (mostra ANTES da manutenção) ═══ -->
+<div id="maintenance-warning-banner" style="display:none;position:fixed;top:0;left:0;width:100%;z-index:9999998;background:linear-gradient(90deg,#f59e0b,#d97706);padding:10px 20px;text-align:center;font-size:13px;font-weight:600;color:#000;display:flex;align-items:center;justify-content:center;gap:10px">
+  <span>🔔</span>
+  <span id="maint-warning-text">O site entrará em manutenção em breve. Guarde seu progresso!</span>
+  <span id="maint-warning-timer" style="background:#000;color:#fbbf24;padding:2px 10px;border-radius:20px;font-size:12px"></span>
+</div>
+
 <!-- ═══ MAINTENANCE PAGE ═══ -->
 <div id="maintenance-page" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999999;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;overflow:hidden">
   <div style="background:linear-gradient(135deg,#1a1f2e,#161b27);border:2px solid #374151;border-radius:20px;padding:40px 50px;max-width:500px">
     <div onclick="secretAdminTap()" style="font-size:80px;margin-bottom:24px;cursor:pointer;opacity:0.3;transition:opacity 0.3s" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='0.3'" title="Clique 3x para admin">🔧</div>
-    <div style="background:#dc2626;color:#fff;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:20px">⚠️ EM MANUTENÇÃO</div>
-    <h1 style="font-size:32px;font-weight:700;color:#fff;margin-bottom:16px">Site Temporariamente Fora do Ar</h1>
+    <div style="background:#dc2626;color:#fff;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;display:inline-block;margin-bottom:20px" id="maint-status-badge">⚠️ EM MANUTENÇÃO</div>
+    <h1 style="font-size:32px;font-weight:700;color:#fff;margin-bottom:16px" id="maint-title">Site em Manutenção</h1>
     <p style="font-size:16px;color:#9ca3af;max-width:400px;line-height:1.8" id="maintenance-msg">Estamos realizando melhorias para você. Volte em breve!</p>
+    <div style="margin-top:20px;padding:16px;background:#1f2937;border-radius:12px;font-size:13px;color:#9ca3af">
+      <div style="margin-bottom:8px">📅 <span id="maint-start-date"></span></div>
+      <div>⏰ <span id="maint-end-date"></span></div>
+    </div>
+    <button onclick="location.reload()" style="margin-top:20px;padding:12px 30px;background:#7c3aed;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer">🔄 Verificar Novamente</button>
   </div>
 </div>
 </body>
